@@ -1,0 +1,30 @@
+<launch>
+
+    <arg name="rosconsole" default="info"/>
+    <arg name="with_rviz" default="true"/>
+    <arg name="with_rbf" default="true"/>
+    <arg name="tum_trajectory_path" default="/root/code/rbf_lio/result/tron1a/trajectory_tum.txt"/>
+    <arg name="rbf_file_path" default="/root/code/rbf_lio/result/rbf/tron1a"/>
+
+    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find lio_sam)/launch/include/rosconsole/rosconsole_$(arg rosconsole).conf"/>
+
+    <!-- LIO core parameters (contains 15cm lidar init and online z calibration params). -->
+    <rosparam file="$(find lio_sam)/config/paramsLivoxIMU.yaml" command="load" />
+    <param name="lio_sam/saveTUMTrajectoryPath" value="$(arg tum_trajectory_path)" />
+
+    <!-- LIO-SAM front/back-end -->
+    <include file="$(find lio_sam)/launch/include/module_loam.launch" />
+
+    <!-- Use WF_TRON1A robot model -->
+    <param name="robot_description" textfile="$(find robot_description)/pointfoot/WF_TRON1A/urdf/robot.urdf"/>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" respawn="true"/>
+
+    <!-- Optional RBF terrain fitting module -->
+    <include if="$(arg with_rbf)" file="$(find cuda_rbf)/launch/run_rbf.launch">
+        <arg name="file_path" value="$(arg rbf_file_path)" />
+    </include>
+
+    <!-- Optional RViz -->
+    <include if="$(arg with_rviz)" file="$(find lio_sam)/launch/include/module_rviz.launch" />
+
+</launch>

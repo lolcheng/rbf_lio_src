@@ -1,0 +1,10 @@
+<launch>
+    <arg name="file_path" default="/root/code/rbf_lio/result/rbf/default" />
+    
+    <node pkg="cuda_rbf" type="elevation_rbf" name="elevation_rbf" output="screen" >
+        <remap from="/local_map" to="/lio_sam/mapping/map_local" />
+        <remap from="/Odometry" to="/lio_sam/mapping/odometry_incremental" />
+        <param name="file_path" value="$(arg file_path)" />
+    </node>
+    <node pkg="cuda_rbf" type="fk.py" name="legged_fk" output="screen" />
+</launch>

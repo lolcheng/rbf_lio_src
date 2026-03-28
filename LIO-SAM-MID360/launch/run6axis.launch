@@ -1,0 +1,30 @@
+<launch>
+
+    <arg name="project" default="lio_sam"/>
+    <!-- rosconsole: info | warn | error -->
+    <arg name="rosconsole" default="info"/>
+    <!-- TUM轨迹保存路径 -->
+    <arg name="tum_trajectory_path" default="/root/code/ws_lio/result/staircase2/rbf_odometry_trajectory_tum.txt"/>
+
+    <!-- 指定打印输出的日志等级 -->
+    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find lio_sam)/launch/include/rosconsole/rosconsole_$(arg rosconsole).conf"/>
+    
+    <!-- Parameters -->
+    <rosparam file="$(find lio_sam)/config/paramsLivoxIMU.yaml" command="load" />
+    
+    <!-- TUM轨迹保存参数 -->
+    <param name="lio_sam/saveTUMTrajectoryPath" value="$(arg tum_trajectory_path)" />
+
+    <!--- LOAM -->
+    <include file="$(find lio_sam)/launch/include/module_loam.launch" />
+
+    <!--- Robot State TF -->
+    <include file="$(find lio_sam)/launch/include/module_robot_state_publisher.launch" />
+
+    <!--- Run Navsat -->
+    <!-- <include file="$(find lio_sam)/launch/include/module_navsat.launch" /> -->
+
+    <!--- Run Rviz-->
+    <include file="$(find lio_sam)/launch/include/module_rviz.launch" />
+
+</launch>

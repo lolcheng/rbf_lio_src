@@ -105,11 +105,20 @@ lio_sam:
   numberOfCores: 4                              # number of cores for mapping optimization
   mappingProcessInterval: 0.15                  # seconds, regulate mapping frequency
   enableRbfConstraint: true
-  rbfConstraintWeight: 1.0
+  rbfConstraintWeight: 0.35
   rbfConstraintMaxPoints: 2000
   rbfSigmaX: 0.07
   rbfSigmaY: 0.07
   rbfNodeMaxNum: 4000
+  # Contact factor component weights (per-wheel residual block: r1,r2,r3,r4x,r4y,r4z)
+  rbfWeightR1: 1.0
+  rbfWeightR2: 0.05
+  rbfWeightR3: 0.02
+  rbfWeightR4: 0.05
+  rbfMaxAbsR1: 0.50
+  rbfMaxAbsR2: 0.30
+  rbfMaxAbsR3: 0.30
+  rbfMaxNormR4: 2.00
   jointStateTopic: "/joint_states"
   wheelRadius: 0.127
   # Online LiDAR z extrinsic tuning driven by manifold residual.

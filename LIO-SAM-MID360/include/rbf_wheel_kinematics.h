@@ -15,15 +15,15 @@ class JointStateWheelKinematics final : public RobotKinematicsModel
 {
 public:
     JointStateWheelKinematics(const std::string& topicName, float wheelRadius);
-    bool computeWheelContacts(
+    bool computeWheelGeometry(
         const std::array<float, 6>& pose,
-        std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>& contacts,
-        std::vector<Eigen::Matrix<float, 3, 6>, Eigen::aligned_allocator<Eigen::Matrix<float, 3, 6>>>& jacobians) override;
+        std::vector<WheelGeometry, Eigen::aligned_allocator<WheelGeometry>>& wheels) override;
 
 private:
     void jointStateHandler(const sensor_msgs::JointState::ConstPtr& msg);
     bool getJointVector(std::array<float, 8>& qOut) const;
     Eigen::Vector3f computeWheelCenterBase(bool left, const std::array<float, 8>& q) const;
+    Eigen::Vector3f computeWheelAxisBase(bool left, const std::array<float, 8>& q) const;
     static Eigen::Matrix3f rotX(float a);
     static Eigen::Matrix3f rotY(float a);
 

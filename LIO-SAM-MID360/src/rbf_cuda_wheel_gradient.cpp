@@ -1,79 +1,176 @@
 #include "rbf_lm_interface.h"
-#include "rbf_cuda_wheel_gradient_kernels.cuh"
 #include <cmath>
+#include <Eigen/Geometry>
 
-#ifndef LIO_SAM_WITH_CUDA
 namespace lio_sam_rbf
 {
-namespace cuda_kernels
+namespace
 {
-bool ComputeWheelResidualJacobianCuda(
-    const std::vector<float>& rbf_x,
-    const std::vector<float>& rbf_y,
-    const std::vector<float>& rbf_w,
-    float sigma_x,
-    float sigma_y,
-    const std::vector<float>& contact_xyz,
-    const std::vector<float>& contact_jacobian,
-    std::vector<float>& residuals,
-    std::vector<float>& jacobians)
+struct ContactResidualEval
 {
-    residuals.clear();
-    jacobians.clear();
-    if (rbf_x.empty() || rbf_x.size() != rbf_y.size() || rbf_x.size() != rbf_w.size())
-        return false;
-    if (contact_xyz.size() % 3 != 0 || contact_jacobian.size() % 18 != 0)
-        return false;
+    std::vector<float> residuals;
+    bool valid = false;
+};
 
-    const int wheel_num = static_cast<int>(contact_xyz.size() / 3);
-    if (wheel_num == 0 || static_cast<int>(contact_jacobian.size() / 18) != wheel_num)
-        return false;
-    if (sigma_x <= 1e-6f || sigma_y <= 1e-6f)
-        return false;
-
-    const float inv_sigma_x2 = 1.0f / (sigma_x * sigma_x);
-    const float inv_sigma_y2 = 1.0f / (sigma_y * sigma_y);
-    residuals.resize(wheel_num);
-    jacobians.resize(wheel_num * 6);
-
-    for (int i = 0; i < wheel_num; ++i)
+inline void evaluateTerrain(const RbfCudaRequest& request, float x, float y, float& h, float& hx, float& hy)
+{
+    h = 0.0f;
+    hx = 0.0f;
+    hy = 0.0f;
+    const float inv_sigma_x2 = 1.0f / std::max(1e-6f, request.sigma_x * request.sigma_x);
+    const float inv_sigma_y2 = 1.0f / std::max(1e-6f, request.sigma_y * request.sigma_y);
+    for (const auto& n : request.rbf_nodes)
     {
-        const float px = contact_xyz[i * 3 + 0];
-        const float py = contact_xyz[i * 3 + 1];
-        const float pz = contact_xyz[i * 3 + 2];
-
-        float h = 0.0f;
-        float dhdx = 0.0f;
-        float dhdy = 0.0f;
-        for (size_t k = 0; k < rbf_x.size(); ++k)
-        {
-            const float dx = px - rbf_x[k];
-            const float dy = py - rbf_y[k];
-            const float phi = std::exp(-0.5f * (dx * dx * inv_sigma_x2 + dy * dy * inv_sigma_y2));
-            const float wk = rbf_w[k];
-            h += wk * phi;
-            dhdx += wk * phi * (-dx * inv_sigma_x2);
-            dhdy += wk * phi * (-dy * inv_sigma_y2);
-        }
-
-        residuals[i] = pz - h;
-        const float* J = contact_jacobian.data() + i * 18;
-        for (int j = 0; j < 6; ++j)
-        {
-            const float dpx = J[0 * 6 + j];
-            const float dpy = J[1 * 6 + j];
-            const float dpz = J[2 * 6 + j];
-            jacobians[i * 6 + j] = dpz - dhdx * dpx - dhdy * dpy;
-        }
+        const float dx = x - n.x();
+        const float dy = y - n.y();
+        const float phi = std::exp(-0.5f * (dx * dx * inv_sigma_x2 + dy * dy * inv_sigma_y2));
+        h += n.z() * phi;
+        hx += n.z() * phi * (-dx * inv_sigma_x2);
+        hy += n.z() * phi * (-dy * inv_sigma_y2);
     }
+}
+
+inline void makeWheelPlaneBasis(const Eigen::Vector3f& axis, Eigen::Vector3f& e1, Eigen::Vector3f& e2)
+{
+    Eigen::Vector3f ref = std::abs(axis.z()) < 0.9f ? Eigen::Vector3f::UnitZ() : Eigen::Vector3f::UnitX();
+    e1 = axis.cross(ref);
+    if (e1.norm() < 1e-6f)
+        e1 = axis.cross(Eigen::Vector3f::UnitY());
+    e1.normalize();
+    e2 = axis.cross(e1).normalized();
+}
+
+inline bool solveContactOnWheel(
+    const RbfCudaRequest& request,
+    const WheelGeometry& wheel,
+    float rho,
+    Eigen::Vector3f& p,
+    Eigen::Vector3f& nGround,
+    Eigen::Vector3f& nWheel,
+    float& rHeight)
+{
+    if (rho <= 1e-6f)
+        return false;
+
+    // Initialize from "closest-down" point on wheel circle in the wheel plane.
+    Eigen::Vector3f e1, e2;
+    makeWheelPlaneBasis(wheel.axis_world, e1, e2);
+    Eigen::Vector3f downProj = Eigen::Vector3f(0.0f, 0.0f, -1.0f);
+    downProj -= downProj.dot(wheel.axis_world) * wheel.axis_world;
+    if (downProj.norm() < 1e-6f)
+        downProj = -e2;
+    downProj.normalize();
+    p = wheel.center_world + rho * downProj;
+
+    // Local GN solve for explicit contact constraints:
+    // r1 = pz - h(px,py)
+    // r2 = a^T (p - c)
+    // r3 = ||p-c||^2 - rho^2
+    for (int iter = 0; iter < 8; ++iter)
+    {
+        float h = 0.0f, hx = 0.0f, hy = 0.0f;
+        evaluateTerrain(request, p.x(), p.y(), h, hx, hy);
+        const Eigen::Vector3f d = p - wheel.center_world;
+
+        Eigen::Matrix<float, 3, 1> r;
+        r(0) = p.z() - h;
+        r(1) = wheel.axis_world.dot(d);
+        r(2) = d.dot(d) - rho * rho;
+
+        Eigen::Matrix3f J;
+        J.row(0) << -hx, -hy, 1.0f;
+        J.row(1) = wheel.axis_world.transpose();
+        J.row(2) = (2.0f * d).transpose();
+
+        Eigen::Matrix3f H = J.transpose() * J;
+        H += 1e-6f * Eigen::Matrix3f::Identity();
+        Eigen::Vector3f g = J.transpose() * r;
+        Eigen::Vector3f dp = -H.ldlt().solve(g);
+        if (!dp.allFinite())
+            break;
+        p += dp;
+        if (dp.norm() < 1e-5f)
+            break;
+    }
+
+    float h = 0.0f, hx = 0.0f, hy = 0.0f;
+    evaluateTerrain(request, p.x(), p.y(), h, hx, hy);
+    rHeight = p.z() - h;
+    nGround = Eigen::Vector3f(-hx, -hy, 1.0f);
+    if (nGround.norm() > 1e-6f)
+        nGround.normalize();
+    else
+        nGround = Eigen::Vector3f::UnitZ();
+
+    nWheel = (p - wheel.center_world) / rho;
+    if (nWheel.norm() > 1e-6f)
+        nWheel.normalize();
+    else
+        nWheel = -nGround;
     return true;
 }
-}
-}
-#endif
 
-namespace lio_sam_rbf
+inline ContactResidualEval evaluateResidualVector(
+    RobotKinematicsModel& kinematics,
+    const RbfCudaRequest& request,
+    const std::array<float, 6>& pose)
 {
+    ContactResidualEval out;
+    std::vector<WheelGeometry, Eigen::aligned_allocator<WheelGeometry>> wheels;
+    if (!kinematics.computeWheelGeometry(pose, wheels) || wheels.empty())
+        return out;
+
+    out.residuals.reserve(wheels.size() * 6);
+    for (const auto& wheel : wheels)
+    {
+        Eigen::Vector3f p, nGround, nWheel;
+        float rHeight = 0.0f;
+        if (!solveContactOnWheel(request, wheel, request.wheel_radius, p, nGround, nWheel, rHeight))
+        {
+            // Keep fixed residual dimensions for numerical Jacobian.
+            // If local contact solve fails, provide a neutral block.
+            out.residuals.push_back(0.0f);
+            out.residuals.push_back(0.0f);
+            out.residuals.push_back(0.0f);
+            out.residuals.push_back(0.0f);
+            out.residuals.push_back(0.0f);
+            out.residuals.push_back(0.0f);
+            continue;
+        }
+
+        auto clampAbs = [](float v, float lim) -> float {
+            const float l = std::max(1e-6f, lim);
+            return std::max(-l, std::min(l, v));
+        };
+
+        float r1 = clampAbs(rHeight, request.max_abs_r1);
+        float r2 = clampAbs(wheel.axis_world.dot(p - wheel.center_world), request.max_abs_r2);
+        float r3 = clampAbs((p - wheel.center_world).squaredNorm() - request.wheel_radius * request.wheel_radius,
+                            request.max_abs_r3);
+        // Use sign-invariant normal consistency: n_w x n_g = 0 (parallel or anti-parallel).
+        Eigen::Vector3f rNormal = nWheel.cross(nGround);
+        const float r4Norm = rNormal.norm();
+        const float r4Lim = std::max(1e-6f, request.max_norm_r4);
+        if (r4Norm > r4Lim)
+            rNormal *= (r4Lim / r4Norm);
+
+        // Explicit contact factor rows:
+        // r1: point on terrain
+        out.residuals.push_back(r1);
+        // r2: point on wheel plane
+        out.residuals.push_back(r2);
+        // r3: distance-to-center equals wheel radius
+        out.residuals.push_back(r3);
+        // r4: normal consistency, 3 residual rows
+        out.residuals.push_back(rNormal.x());
+        out.residuals.push_back(rNormal.y());
+        out.residuals.push_back(rNormal.z());
+    }
+    out.valid = !out.residuals.empty();
+    return out;
+}
+} // namespace
+
 class CudaWheelRbfGradient final : public RbfCudaGradientInterface
 {
 public:
@@ -85,73 +182,49 @@ public:
     bool computeGradient(const RbfCudaRequest& request, std::vector<RbfLmConstraint>& constraints) override
     {
         constraints.clear();
-        if (!kinematics_)
-            return false;
-        if (request.rbf_nodes.empty())
+        if (!kinematics_ || request.rbf_nodes.empty())
             return false;
 
-        std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> contacts;
-        std::vector<Eigen::Matrix<float, 3, 6>, Eigen::aligned_allocator<Eigen::Matrix<float, 3, 6>>> jacobians;
-        if (!kinematics_->computeWheelContacts(request.pose, contacts, jacobians))
-            return false;
-        if (contacts.empty() || jacobians.size() != contacts.size())
+        ContactResidualEval base = evaluateResidualVector(*kinematics_, request, request.pose);
+        if (!base.valid || base.residuals.empty())
             return false;
 
-        std::vector<float> rbf_x;
-        std::vector<float> rbf_y;
-        std::vector<float> rbf_w;
-        rbf_x.reserve(request.rbf_nodes.size());
-        rbf_y.reserve(request.rbf_nodes.size());
-        rbf_w.reserve(request.rbf_nodes.size());
-        for (const auto& n : request.rbf_nodes)
+        const int rows = static_cast<int>(base.residuals.size());
+        std::vector<float> jac(static_cast<size_t>(rows) * 6, 0.0f);
+
+        for (int j = 0; j < 6; ++j)
         {
-            rbf_x.push_back(n.x());
-            rbf_y.push_back(n.y());
-            rbf_w.push_back(n.z());
+            std::array<float, 6> posePlus = request.pose;
+            std::array<float, 6> poseMinus = request.pose;
+            const float eps = (j < 3) ? 1e-4f : 1e-3f;
+            posePlus[j] += eps;
+            poseMinus[j] -= eps;
+
+            ContactResidualEval plus = evaluateResidualVector(*kinematics_, request, posePlus);
+            ContactResidualEval minus = evaluateResidualVector(*kinematics_, request, poseMinus);
+            if (!plus.valid || !minus.valid || plus.residuals.size() != base.residuals.size() || minus.residuals.size() != base.residuals.size())
+                return false;
+
+            for (int r = 0; r < rows; ++r)
+                jac[r * 6 + j] = (plus.residuals[r] - minus.residuals[r]) / (2.0f * eps);
         }
 
-        std::vector<float> contact_xyz;
-        std::vector<float> contact_jacobian;
-        contact_xyz.reserve(contacts.size() * 3);
-        contact_jacobian.reserve(contacts.size() * 18);
-
-        for (size_t i = 0; i < contacts.size(); ++i)
+        constraints.resize(rows);
+        for (int r = 0; r < rows; ++r)
         {
-            contact_xyz.push_back(contacts[i].x());
-            contact_xyz.push_back(contacts[i].y());
-            contact_xyz.push_back(contacts[i].z());
-            for (int r = 0; r < 3; ++r)
-            {
-                for (int c = 0; c < 6; ++c)
-                    contact_jacobian.push_back(jacobians[i](r, c));
-            }
-        }
-
-        std::vector<float> residuals;
-        std::vector<float> grads;
-        bool ok = cuda_kernels::ComputeWheelResidualJacobianCuda(
-            rbf_x,
-            rbf_y,
-            rbf_w,
-            request.sigma_x,
-            request.sigma_y,
-            contact_xyz,
-            contact_jacobian,
-            residuals,
-            grads);
-
-        if (!ok)
-            return false;
-        if (residuals.size() != contacts.size() || grads.size() != contacts.size() * 6)
-            return false;
-
-        constraints.resize(contacts.size());
-        for (size_t i = 0; i < contacts.size(); ++i)
-        {
-            constraints[i].residual = residuals[i];
-            constraints[i].weight = 1.0f;
+            constraints[r].residual = base.residuals[r];
+            // For each wheel residual block: [r1, r2, r3, r4x, r4y, r4z]
+            const int local = r % 6;
+            if (local == 0)
+                constraints[r].weight = request.weight_r1;   // r1
+            else if (local == 1)
+                constraints[r].weight = request.weight_r2;   // r2
+            else if (local == 2)
+                constraints[r].weight = request.weight_r3;   // r3
+            else
+                constraints[r].weight = request.weight_r4;   // r4
             for (int j = 0; j < 6; ++j)
-                constraints[i].jacobian[j] = grads[i * 6 + j];
+                constraints[r].jacobian[j] = jac[r * 6 + j];
         }
         return true;
     }

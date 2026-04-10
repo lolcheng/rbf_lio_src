@@ -3,8 +3,9 @@
     <arg name="rosconsole" default="info"/>
     <arg name="with_rviz" default="true"/>
     <arg name="with_rbf" default="true"/>
-    <arg name="tum_trajectory_path" default="/root/code/rbf_lio/result/tron1a/trajectory_tum.txt"/>
-    <arg name="rbf_file_path" default="/root/code/rbf_lio/result/rbf/tron1a"/>
+    <arg name="with_robot_tf" default="false"/>
+    <arg name="tum_trajectory_path" default="/root/code/rbf_lio/result_0331/staircase2/trajectory_tum.txt"/>
+    <arg name="rbf_file_path" default="/root/code/rbf_lio/result_0331/staircase2"/>
 
     <env name="ROSCONSOLE_CONFIG_FILE" value="$(find lio_sam)/launch/include/rosconsole/rosconsole_$(arg rosconsole).conf"/>
 
@@ -17,7 +18,19 @@
 
     <!-- Use WF_TRON1A robot model -->
     <param name="robot_description" textfile="$(find robot_description)/pointfoot/WF_TRON1A/urdf/robot.urdf"/>
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" respawn="true"/>
+    <node if="$(arg with_robot_tf)"
+          name="joint_state_name_adapter"
+          pkg="lio_sam"
+          type="joint_state_name_adapter.py"
+          output="screen"
+          respawn="true">
+        <param name="input_topic" value="/joint_states" />
+        <param name="output_topic" value="/joint_states_tron1a" />
+        <param name="refresh_stamp" value="true" />
+    </node>
+    <node if="$(arg with_robot_tf)" name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" respawn="true">
+        <remap from="/joint_states" to="/joint_states_tron1a" />
+    </node>
 
     <!-- Optional RBF terrain fitting module -->
     <include if="$(arg with_rbf)" file="$(find cuda_rbf)/launch/run_rbf.launch">

@@ -141,13 +141,38 @@ Eigen::Vector3f JointStateWheelKinematics::computeWheelCenterBase(bool left, con
     return p;
 }
 
-bool JointStateWheelKinematics::computeWheelContacts(
-    const std::array<float, 6>& pose,
-    std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>& contacts,
-    std::vector<Eigen::Matrix<float, 3, 6>, Eigen::aligned_allocator<Eigen::Matrix<float, 3, 6>>>& jacobians)
+Eigen::Vector3f JointStateWheelKinematics::computeWheelAxisBase(bool left, const std::array<float, 8>& q) const
 {
-    contacts.clear();
-    jacobians.clear();
+    const int idxAbad = left ? 0 : 4;
+    const int idxHip = left ? 1 : 5;
+    const int idxKnee = left ? 2 : 6;
+
+    const float qAbad = q[idxAbad];
+    const float qHip = q[idxHip];
+    const float qKnee = q[idxKnee];
+
+    Eigen::Matrix3f R = Eigen::Matrix3f::Identity();
+    R = R * rotX(qAbad);
+    const float hipSign = left ? 1.0f : -1.0f;
+    R = R * rotY(hipSign * qHip);
+    const float kneeSign = left ? -1.0f : 1.0f;
+    R = R * rotY(kneeSign * qKnee);
+
+    // Wheel joint axis in knee frame from URDF is always [0, 1, 0].
+    Eigen::Vector3f axis = R * Eigen::Vector3f::UnitY();
+    const float n = axis.norm();
+    if (n > 1e-6f)
+        axis /= n;
+    else
+        axis = Eigen::Vector3f::UnitY();
+    return axis;
+}
+
+bool JointStateWheelKinematics::computeWheelGeometry(
+    const std::array<float, 6>& pose,
+    std::vector<WheelGeometry, Eigen::aligned_allocator<WheelGeometry>>& wheels)
+{
+    wheels.clear();
 
     std::array<float, 8> q{};
     if (!getJointVector(q))
@@ -187,48 +212,39 @@ bool JointStateWheelKinematics::computeWheelContacts(
 
     Eigen::Matrix3f R = Rz * Ry * Rx;
 
-    Eigen::Matrix3f dRx;
-    dRx << 0.0f, 0.0f, 0.0f,
-           0.0f, -sr, -cr,
-           0.0f, cr, -sr;
-
-    Eigen::Matrix3f dRy;
-    dRy << -sp, 0.0f, cp,
-           0.0f, 0.0f, 0.0f,
-           -cp, 0.0f, -sp;
-
-    Eigen::Matrix3f dRz;
-    dRz << -sy, -cy, 0.0f,
-            cy, -sy, 0.0f,
-            0.0f, 0.0f, 0.0f;
-
-    Eigen::Matrix3f dR_dr = Rz * Ry * dRx;
-    Eigen::Matrix3f dR_dp = Rz * dRy * Rx;
-    Eigen::Matrix3f dR_dy = dRz * Ry * Rx;
     Eigen::Vector3f t(tx, ty, tz);
 
     const Eigen::Vector3f centerL = computeWheelCenterBase(true, q);
     const Eigen::Vector3f centerR = computeWheelCenterBase(false, q);
-    std::array<Eigen::Vector3f, 2> centers = {centerL, centerR};
+    const Eigen::Vector3f axisLBase = computeWheelAxisBase(true, q);
+    const Eigen::Vector3f axisRBase = computeWheelAxisBase(false, q);
 
-    contacts.reserve(centers.size());
-    jacobians.reserve(centers.size());
-
-    for (const auto& pb : centers)
+    wheels.reserve(2);
     {
-        Eigen::Vector3f c = t + R * pb;
-        // Approximate contact point directly below wheel center in world frame.
-        c.z() -= wheelRadius_;
-        contacts.push_back(c);
+        WheelGeometry wl;
+        wl.center_world = t + R * centerL;
+        wl.axis_world = R * axisLBase;
+        if (wl.axis_world.norm() > 1e-6f)
+            wl.axis_world.normalize();
+        else
+            wl.axis_world = Eigen::Vector3f::UnitY();
+        wheels.push_back(wl);
+    }
+    {
+        WheelGeometry wr;
+        wr.center_world = t + R * centerR;
+        wr.axis_world = R * axisRBase;
+        if (wr.axis_world.norm() > 1e-6f)
+            wr.axis_world.normalize();
+        else
+            wr.axis_world = Eigen::Vector3f::UnitY();
+        wheels.push_back(wr);
+    }
 
-        Eigen::Matrix<float, 3, 6> J;
-        J.col(0) = dR_dr * pb;
-        J.col(1) = dR_dp * pb;
-        J.col(2) = dR_dy * pb;
-        J.col(3) = Eigen::Vector3f::UnitX();
-        J.col(4) = Eigen::Vector3f::UnitY();
-        J.col(5) = Eigen::Vector3f::UnitZ();
-        jacobians.push_back(J);
+    if (wheels.empty())
+    {
+        ROS_WARN_THROTTLE(2.0, "[lio_sam][rbf] wheel geometry empty.");
+        return false;
     }
     return true;
 }

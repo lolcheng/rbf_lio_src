@@ -1,0 +1,1123 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.4.29)  13 JUL 2026 17:21
+entering extended mode
+ restricted \write18 enabled.
+ file:line:error style messages enabled.
+ %&-line parsing enabled.
+**e:/rbf_lio_src/latexbox/Sensors/jsen.tex
+(e:/rbf_lio_src/latexbox/Sensors/jsen.tex
+LaTeX2e <2022-11-01> patch level 1
+L3 programming layer <2023-02-22> (./ieeecolor.cls
+
+LaTeX Warning: You have requested document class `ieeecolor',
+               but the document class provides `IEEEtran'.
+
+Document Class: IEEEtran 2002/11/18 revision V1.6b by Michael Shell
+-- See the "IEEEtran_HOWTO" manual for usage information.
+-- The source comments contain changelog notes.
+(d:/latex/texlive/2023/texmf-dist/tex/latex/graphics/color.sty
+Package: color 2022/01/06 v1.3d Standard LaTeX Color (DPC)
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/graphics-cfg/color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package color Info: Driver file: pdftex.def on input line 149.
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/graphics-def/pdftex.def
+File: pdftex.def 2022/09/22 v1.2b Graphics/color driver for pdftex
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+\@draftversionrule=\dimen140
+\@IEEEtrantmpdimenA=\dimen141
+\@IEEEtrantmpdimenB=\dimen142
+\@IEEEtrantmpcountA=\count185
+\@IEEEtrantmpcountB=\count186
+\@IEEEtrantmptoksA=\toks16
+LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 834.
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/psnfss/ot1ptm.fd
+File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
+)
+\@IEEEnormalsizefontbaselineskip=\skip48
+
+-- This is a 10 point document.
+\normalsizebaselineskip=\skip49
+\normaljot=\skip50
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <5> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <5> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <7> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <8> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <8> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <9> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <10> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <11> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <11> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <12> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <17> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <17> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <20> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <20> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <24> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1180.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <24> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1180.
+\IEEEilabelindentA=\dimen143
+\IEEEilabelindentB=\dimen144
+\IEEEilabelindent=\dimen145
+\IEEEelabelindent=\dimen146
+\IEEEdlabelindent=\dimen147
+\labelindent=\dimen148
+\IEEEiednormlabelsep=\dimen149
+\IEEEiedmathlabelsep=\dimen150
+\IEEEiedtopsep=\skip51
+\c@section=\count187
+\c@subsection=\count188
+\c@subsubsection=\count189
+\c@paragraph=\count190
+\c@IEEEsubequation=\count191
+\abovecaptionskip=\skip52
+\belowcaptionskip=\skip53
+\figbox=\box51
+\c@figure=\count192
+\c@query=\count193
+\c@qry=\count194
+\c@nquery=\count195
+\c@tquery=\count196
+\c@equery=\count197
+\c@eqry=\count198
+\c@edquery=\count199
+\c@etquery=\count266
+\c@table=\count267
+\@IEEEeqnnumcols=\count268
+\@IEEEeqncolcnt=\count269
+\firstpagerule=\skip54
+\logowidth=\skip55
+\@IEEEtmpitemindent=\dimen151
+\c@biography=\count270
+\c@edbiography=\count271
+LaTeX Info: Redefining \sf on input line 4883.
+\@IEEEtranrubishbin=\box52
+) (./jsen.sty) (d:/latex/texlive/2023/texmf-dist/tex/latex/cite/cite.sty
+LaTeX Info: Redefining \cite on input line 302.
+LaTeX Info: Redefining \nocite on input line 332.
+Package: cite 2015/02/27  v 5.5
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2022/04/08 v2.17n AMS math features
+\@mathmargin=\skip56
+
+For additional information on amsmath, use the `?' option.
+(d:/latex/texlive/2023/texmf-dist/tex/latex/amsmath/amstext.sty
+Package: amstext 2021/08/26 v2.01 AMS text
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0 generic functions
+\@emptytoks=\toks17
+\ex@=\dimen152
+)) (d:/latex/texlive/2023/texmf-dist/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d Bold Symbols
+\pmbraise@=\dimen153
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/amsmath/amsopn.sty
+Package: amsopn 2022/04/08 v2.04 operator names
+)
+\inf@bad=\count272
+LaTeX Info: Redefining \frac on input line 234.
+\uproot@=\count273
+\leftroot@=\count274
+LaTeX Info: Redefining \overline on input line 399.
+LaTeX Info: Redefining \colon on input line 410.
+\classnum@=\count275
+\DOTSCASE@=\count276
+LaTeX Info: Redefining \ldots on input line 496.
+LaTeX Info: Redefining \dots on input line 499.
+LaTeX Info: Redefining \cdots on input line 620.
+\Mathstrutbox@=\box53
+\strutbox@=\box54
+LaTeX Info: Redefining \big on input line 722.
+LaTeX Info: Redefining \Big on input line 723.
+LaTeX Info: Redefining \bigg on input line 724.
+LaTeX Info: Redefining \Bigg on input line 725.
+\big@size=\dimen154
+LaTeX Font Info:    Redeclaring font encoding OML on input line 743.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 744.
+\macc@depth=\count277
+LaTeX Info: Redefining \bmod on input line 905.
+LaTeX Info: Redefining \pmod on input line 910.
+LaTeX Info: Redefining \smash on input line 940.
+LaTeX Info: Redefining \relbar on input line 970.
+LaTeX Info: Redefining \Relbar on input line 971.
+\c@MaxMatrixCols=\count278
+\dotsspace@=\muskip16
+\c@parentequation=\count279
+\dspbrk@lvl=\count280
+\tag@help=\toks18
+\row@=\count281
+\column@=\count282
+\maxfields@=\count283
+\andhelp@=\toks19
+\eqnshift@=\dimen155
+\alignsep@=\dimen156
+\tagshift@=\dimen157
+\tagwidth@=\dimen158
+\totwidth@=\dimen159
+\lineht@=\dimen160
+\@envbody=\toks20
+\multlinegap=\skip57
+\multlinetaggap=\skip58
+\mathdisplay@stack=\toks21
+LaTeX Info: Redefining \[ on input line 2953.
+LaTeX Info: Redefining \] on input line 2954.
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2013/01/14 v3.01 AMS font symbols
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
+)) (d:/latex/texlive/2023/texmf-dist/tex/latex/algorithms/algorithmic.sty
+Package: algorithmic 2009/08/24 v0.1 Document Style `algorithmic'
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/base/ifthen.sty
+Package: ifthen 2022/04/13 v1.1d Standard LaTeX ifthen package (DPC)
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
+\KV@toks@=\toks22
+)
+\c@ALC@unique=\count284
+\c@ALC@line=\count285
+\c@ALC@rem=\count286
+\c@ALC@depth=\count287
+\ALC@tlm=\skip59
+\algorithmicindent=\skip60
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2022/03/10 v1.4e Standard LaTeX Graphics (DPC,SPQR)
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/graphics/trig.sty
+Package: trig 2021/08/11 v1.11 sin cos tan (DPC)
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
+)
+Package graphics Info: Driver file: pdftex.def on input line 107.
+)
+\Gin@req@height=\dimen161
+\Gin@req@width=\dimen162
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/base/textcomp.sty
+Package: textcomp 2020/02/02 v2.0n Standard LaTeX package
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/wrapfig/wrapfig.sty
+\wrapoverhang=\dimen163
+\WF@size=\dimen164
+\c@WF@wrappedlines=\count288
+\WF@box=\box55
+\WF@everypar=\toks23
+Package: wrapfig 2003/01/31  v 3.6
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/dblfloatfix/dblfloatfix.sty
+Package: dblfloatfix 2012/12/31 v1.0a (JAW)
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/base/fixltx2e.sty
+Package: fixltx2e 2016/12/29 v2.1a fixes to LaTeX (obsolete)
+Applying: [2015/01/01] Old fixltx2e package on input line 46.
+
+
+Package fixltx2e Warning: fixltx2e is not required with releases after 2015
+(fixltx2e)                All fixes are now in the LaTeX kernel.
+(fixltx2e)                See the latexrelease package for details.
+
+Already applied: [0000/00/00] Old fixltx2e package on input line 53.
+)
+\@dblbotnum=\count289
+\c@dblbotnumber=\count290
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/tools/bm.sty
+Package: bm 2022/01/05 v1.2f Bold Symbol Support (DPC/FMi)
+\symboldoperators=\mathgroup6
+\symboldletters=\mathgroup7
+\symboldsymbols=\mathgroup8
+Package bm Info: No bold for \OMX/cmex/m/n, using \pmb.
+Package bm Info: No bold for \U/msa/m/n, using \pmb.
+Package bm Info: No bold for \U/msb/m/n, using \pmb.
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 149.
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/bbm-macros/bbm.sty
+Package: bbm 1999/03/15 V 1.2 provides fonts for set symbols - TH
+LaTeX Font Info:    Overwriting math alphabet `\mathbbm' in version `bold'
+(Font)                  U/bbm/m/n --> U/bbm/bx/n on input line 33.
+LaTeX Font Info:    Overwriting math alphabet `\mathbbmss' in version `bold'
+(Font)                  U/bbmss/m/n --> U/bbmss/bx/n on input line 35.
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/siunitx/siunitx.sty
+Package: siunitx 2023-03-04 v3.2.2 A comprehensive (SI) units package
+\l__siunitx_angle_tmp_dim=\dimen165
+\l__siunitx_angle_marker_box=\box56
+\l__siunitx_angle_unit_box=\box57
+\l__siunitx_compound_count_int=\count291
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/translations/translations.sty
+Package: translations 2022/02/05 v1.12 internationalization of LaTeX2e packages (CN)
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/etoolbox/etoolbox.sty
+Package: etoolbox 2020/10/05 v2.5k e-TeX tools for LaTeX (JAW)
+\etb@tempcnta=\count292
+) (d:/latex/texlive/2023/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO)
+ (d:/latex/texlive/2023/texmf-dist/tex/generic/infwarerr/infwarerr.sty
+Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
+) (d:/latex/texlive/2023/texmf-dist/tex/generic/iftex/iftex.sty
+Package: iftex 2022/02/03 v1.0f TeX engine tests
+) (d:/latex/texlive/2023/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
+Package: ltxcmds 2020-05-10 v1.25 LaTeX kernel commands for general use (HO)
+)
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+))
+\l__siunitx_number_exponent_fixed_int=\count293
+\l__siunitx_number_min_decimal_int=\count294
+\l__siunitx_number_min_integer_int=\count295
+\l__siunitx_number_round_precision_int=\count296
+\l__siunitx_number_lower_threshold_int=\count297
+\l__siunitx_number_upper_threshold_int=\count298
+\l__siunitx_number_group_first_int=\count299
+\l__siunitx_number_group_size_int=\count300
+\l__siunitx_number_group_minimum_int=\count301
+\l__siunitx_table_tmp_box=\box58
+\l__siunitx_table_tmp_dim=\dimen166
+\l__siunitx_table_column_width_dim=\dimen167
+\l__siunitx_table_integer_box=\box59
+\l__siunitx_table_decimal_box=\box60
+\l__siunitx_table_uncert_box=\box61
+\l__siunitx_table_before_box=\box62
+\l__siunitx_table_after_box=\box63
+\l__siunitx_table_before_dim=\dimen168
+\l__siunitx_table_carry_dim=\dimen169
+\l__siunitx_unit_tmp_int=\count302
+\l__siunitx_unit_position_int=\count303
+\l__siunitx_unit_total_int=\count304
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/tools/array.sty
+Package: array 2022/09/04 v2.5g Tabular extension package (FMi)
+\col@sep=\dimen170
+\ar@mcellbox=\box64
+\extrarowheight=\dimen171
+\NC@list=\toks24
+\extratabsurround=\skip61
+\backup@length=\skip62
+\ar@cellbox=\box65
+)) (d:/latex/texlive/2023/texmf-dist/tex/latex/makecell/makecell.sty
+Package: makecell 2009/08/03 V0.1e Managing of Tab Column Heads and Cells
+\rotheadsize=\dimen172
+\c@nlinenum=\count305
+\TeXr@lab=\toks25
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/url/url.sty
+\Urlmuskip=\muskip17
+Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/placeins/placeins.sty
+Package: placeins 2005/04/18  v 2.2
+)
+Package color Info: Redefining color blue on input line 24.
+Package translations Info: No language package found. I am going to use `english' as default language. on input line 58.
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
+File: l3backend-pdftex.def 2023-01-16 L3 backend support: PDF output (pdfTeX)
+\l__color_backend_stack_int=\count306
+\l__pdf_internal_box=\box66
+) (./jsen.aux)
+\openout1 = `jsen.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 58.
+LaTeX Font Info:    ... okay on input line 58.
+ (d:/latex/texlive/2023/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count307
+\scratchdimen=\dimen173
+\scratchbox=\box67
+\nofMPsegments=\count308
+\nofMParguments=\count309
+\everyMPshowfont=\toks26
+\MPscratchCnt=\count310
+\MPscratchDim=\dimen174
+\MPnumerator=\count311
+\makeMPintoPDFobject=\count312
+\everyMPtoPDFconversion=\toks27
+) (d:/latex/texlive/2023/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
+Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
+)) (d:/latex/texlive/2023/texmf-dist/tex/latex/translations/translations-basic-dictionary-english.trsl
+File: translations-basic-dictionary-english.trsl (english translation file `translations-basic-dictionary')
+)
+Package translations Info: loading dictionary `translations-basic-dictionary' for `english'. on input line 58.
+Package color Info: Redefining color nblue on input line 85.
+Package color Info: Redefining color mblue on input line 85.
+LaTeX Font Info:    Trying to load font information for OT1+phv on input line 85.
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/psnfss/ot1phv.fd
+File: ot1phv.fd 2020/03/25 scalable font definitions for OT1/phv.
+)
+<jsenga.png, id=1, 1749.53625pt x 635.37375pt>
+File: jsenga.png Graphic file (type png)
+<use jsenga.png>
+Package pdftex.def Info: jsenga.png  used on input line 85.
+(pdftex.def)             Requested size: 361.34999pt x 131.22195pt.
+Package color Info: Redefining color nblue on input line 85.
+Package color Info: Redefining color mblue on input line 85.
+LaTeX Font Info:    Font shape `OT1/phv/b/it' in size <9> not available
+(Font)              Font shape `OT1/phv/b/sl' tried instead on input line 85.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 85.
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 85.
+ (d:/latex/texlive/2023/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
+Underfull \hbox (badness 2744) in paragraph at lines 85--85
+[][]\OT1/phv/b/sl/9 Abstract\OT1/phv/b/n/9 ---[]Legged-wheel robots
+ []
+
+
+Underfull \hbox (badness 4686) in paragraph at lines 85--85
+\OT1/phv/b/n/9 ge-om-e-try can lead to se-vere
+ []
+
+
+Underfull \hbox (badness 6348) in paragraph at lines 85--85
+\OT1/phv/b/n/9 odom-e-try drifts. In par-tic-u-lar,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+\OT1/phv/b/n/9 abrupt ver-ti-cal ac-cel-er-a-tions
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+\OT1/phv/b/n/9 caused by un-even sur-faces
+ []
+
+
+Underfull \hbox (badness 2027) in paragraph at lines 85--85
+\OT1/phv/b/n/9 map-ping ac-cu-racy. To ad-dress
+ []
+
+
+Underfull \hbox (badness 5475) in paragraph at lines 85--85
+\OT1/phv/b/n/9 aware LiDAR-Inertial odom-e-try
+ []
+
+Package color Info: Redefining color nblue on input line 85.
+Package color Info: Redefining color mblue on input line 85.
+Package color Info: Redefining color nblue on input line 85.
+Package color Info: Redefining color mblue on input line 85.
+File: jsenga.png Graphic file (type png)
+<use jsenga.png>
+Package pdftex.def Info: jsenga.png  used on input line 85.
+(pdftex.def)             Requested size: 361.34999pt x 131.22195pt.
+Package color Info: Redefining color nblue on input line 85.
+Package color Info: Redefining color mblue on input line 85.
+
+Underfull \hbox (badness 2744) in paragraph at lines 85--85
+[][]\OT1/phv/b/sl/9 Abstract\OT1/phv/b/n/9 ---[]Legged-wheel robots
+ []
+
+
+Underfull \hbox (badness 4686) in paragraph at lines 85--85
+\OT1/phv/b/n/9 ge-om-e-try can lead to se-vere
+ []
+
+
+Underfull \hbox (badness 6348) in paragraph at lines 85--85
+\OT1/phv/b/n/9 odom-e-try drifts. In par-tic-u-lar,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+\OT1/phv/b/n/9 abrupt ver-ti-cal ac-cel-er-a-tions
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 85--85
+\OT1/phv/b/n/9 caused by un-even sur-faces
+ []
+
+
+Underfull \hbox (badness 2027) in paragraph at lines 85--85
+\OT1/phv/b/n/9 map-ping ac-cu-racy. To ad-dress
+ []
+
+
+Underfull \hbox (badness 5475) in paragraph at lines 85--85
+\OT1/phv/b/n/9 aware LiDAR-Inertial odom-e-try
+ []
+
+Package color Info: Redefining color nblue on input line 85.
+Package color Info: Redefining color mblue on input line 85.
+LaTeX Font Info:    Trying to load font information for T1+phv on input line 91.
+(d:/latex/texlive/2023/texmf-dist/tex/latex/psnfss/t1phv.fd
+File: t1phv.fd 2020/03/25 scalable font definitions for T1/phv.
+)
+Package epstopdf Info: Source file: <LOGO-jsen-web.eps>
+(epstopdf)                    date: 2026-06-30 17:14:41
+(epstopdf)                    size: 49307 bytes
+(epstopdf)             Output file: <LOGO-jsen-web-eps-converted-to.pdf>
+(epstopdf)             Command: <repstopdf --outfile=LOGO-jsen-web-eps-converted-to.pdf LOGO-jsen-web.eps>
+(epstopdf)             \includegraphics on input line 96.
+runsystem(repstopdf --outfile=LOGO-jsen-web-eps-converted-to.pdf LOGO-jsen-web.eps)...executed safely (allowed).
+
+Package epstopdf Info: Result file: <LOGO-jsen-web-eps-converted-to.pdf>.
+
+
+e:/rbf_lio_src/latexbox/Sensors/jsen.tex:96: Package pdftex.def Error: File `LOGO-jsen-web-eps-converted-to.pdf' not found: using draft setting.
+
+See the pdftex.def package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.96 
+     
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 96.
+(d:/latex/texlive/2023/texmf-dist/tex/latex/psnfss/ot1pcr.fd
+File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
+)
+Overfull \hbox (221.20007pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \hbox (49.79993pt too wide) has occurred while \output is active
+[] [] [] 
+ []
+
+
+Underfull \hbox (badness 10000) has occurred while \output is active
+[]
+ []
+
+
+Overfull \vbox (81.80406pt too high) has occurred while \output is active []
+
+ [1{d:/latex/texlive/2023/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{d:/latex/texlive/2023/texmf-dist/fonts/enc/dvips/base/8r.enc}
+
+
+ <./jsenga.png>]
+
+LaTeX Warning: Reference `fig:robot-setting' on page 2 undefined on input line 99.
+
+<figure/robot_setting/robot_fov_new.jpg, id=17, 1667.22874pt x 585.18625pt>
+File: figure/robot_setting/robot_fov_new.jpg Graphic file (type jpg)
+<use figure/robot_setting/robot_fov_new.jpg>
+Package pdftex.def Info: figure/robot_setting/robot_fov_new.jpg  used on input line 103.
+(pdftex.def)             Requested size: 252.0pt x 88.44383pt.
+
+LaTeX Warning: Citation `fastlio2' on page 2 undefined on input line 116.
+
+
+LaTeX Warning: Citation `glim' on page 2 undefined on input line 116.
+
+
+LaTeX Warning: Citation `leg-kilo' on page 2 undefined on input line 116.
+
+
+LaTeX Warning: Citation `roloslam' on page 2 undefined on input line 116.
+
+
+LaTeX Warning: Citation `wl-slam' on page 2 undefined on input line 116.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 116--116
+[][][]\OT1/ptm/m/n/8 Available at $\OT1/pcr/m/n/8 https : / / zhanghan-[]tc . github . io / legged _
+ []
+
+
+LaTeX Warning: Citation `loam' on page 2 undefined on input line 121.
+
+
+LaTeX Warning: Citation `liosam' on page 2 undefined on input line 121.
+
+
+LaTeX Warning: Citation `fastlio2' on page 2 undefined on input line 121.
+
+
+LaTeX Warning: Citation `fastlio' on page 2 undefined on input line 121.
+
+
+LaTeX Warning: Citation `glim' on page 2 undefined on input line 121.
+
+
+LaTeX Warning: Citation `leg-kilo' on page 2 undefined on input line 123.
+
+
+LaTeX Warning: Citation `wl-slam' on page 2 undefined on input line 123.
+
+
+LaTeX Warning: Citation `vilen' on page 2 undefined on input line 123.
+
+
+LaTeX Warning: Citation `liko' on page 2 undefined on input line 123.
+
+
+LaTeX Warning: Citation `roloslam' on page 2 undefined on input line 124.
+
+
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [2
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+ <./figure/robot_setting/robot_fov_new.jpg>]
+
+LaTeX Warning: Citation `ars-slam' on page 3 undefined on input line 126.
+
+
+LaTeX Warning: Citation `frl-slam' on page 3 undefined on input line 126.
+
+
+Underfull \hbox (badness 1881) in paragraph at lines 126--127
+[]\OT1/ptm/m/n/10 Beyond contact- and kinematics-based meth-ods, some
+ []
+
+
+LaTeX Warning: Citation `elevation_map_2014' on page 3 undefined on input line 128.
+
+
+LaTeX Warning: Citation `elevation_map_2018' on page 3 undefined on input line 128.
+
+
+LaTeX Warning: Citation `elevation_map_gpu' on page 3 undefined on input line 128.
+
+
+LaTeX Warning: Citation `lio_gc' on page 3 undefined on input line 128.
+
+
+LaTeX Warning: Citation `elevation_map_gp' on page 3 undefined on input line 130.
+
+
+LaTeX Warning: Citation `rbf2001' on page 3 undefined on input line 130.
+
+
+LaTeX Warning: Citation `rbf_air' on page 3 undefined on input line 130.
+
+
+LaTeX Warning: Citation `OptVec' on page 3 undefined on input line 130.
+
+LaTeX Font Info:    Font shape `OT1/phv/m/it' in size <7> not available
+(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 166.
+
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [3]
+Overfull \hbox (6.094pt too wide) detected at line 220
+[][][]
+ []
+
+
+LaTeX Warning: Reference `sec:problem_formulation' on page 4 undefined on input line 229.
+
+LaTeX Font Info:    Font shape `OT1/phv/m/it' in size <10> not available
+(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 230.
+
+LaTeX Warning: Citation `rbf2001' on page 4 undefined on input line 231.
+
+
+LaTeX Warning: Reference `RBF_fml' on page 4 undefined on input line 258.
+
+
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [4]
+<figure/rbf/kd_tree.png, id=41, 1241.38782pt x 578.91281pt>
+File: figure/rbf/kd_tree.png Graphic file (type png)
+<use figure/rbf/kd_tree.png>
+Package pdftex.def Info: figure/rbf/kd_tree.png  used on input line 278.
+(pdftex.def)             Requested size: 226.79846pt x 105.76334pt.
+
+
+LaTeX Warning: Reference `fig:kd_tree' on page 5 undefined on input line 283.
+
+
+LaTeX Warning: Reference `RBF_fml' on page 5 undefined on input line 287.
+
+
+LaTeX Warning: Reference `RBF_fml' on page 5 undefined on input line 301.
+
+
+LaTeX Warning: Reference `eq:moment_equality' on page 5 undefined on input line 328.
+
+
+LaTeX Warning: Reference `eq:RBF_estimator' on page 5 undefined on input line 343.
+
+
+LaTeX Warning: Reference `eq:mm_corresponding_obj_fun' on page 5 undefined on input line 349.
+
+
+LaTeX Warning: Citation `ridge' on page 5 undefined on input line 349.
+
+
+LaTeX Warning: Reference `eq:mm_corresponding_obj_fun' on page 5 undefined on input line 357.
+
+
+LaTeX Warning: Citation `ridge' on page 5 undefined on input line 357.
+
+
+LaTeX Warning: Reference `sec:experiment' on page 5 undefined on input line 357.
+
+
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [5 <./figure/rbf/kd_tree.png>]
+
+LaTeX Warning: Reference `RBF_fml' on page 6 undefined on input line 361.
+
+
+LaTeX Warning: Reference `eq:RBF_def' on page 6 undefined on input line 361.
+
+
+LaTeX Warning: Reference `eq:RBF_estimator' on page 6 undefined on input line 363.
+
+LaTeX Font Info:    Trying to load font information for U+euf on input line 371.
+(d:/latex/texlive/2023/texmf-dist/tex/latex/amsfonts/ueuf.fd
+File: ueuf.fd 2013/01/14 v3.01 Euler Fraktur
+)
+
+LaTeX Warning: Reference `eq:mfk_m_approx' on page 6 undefined on input line 402.
+
+
+LaTeX Warning: Reference `eq:H_update' on page 6 undefined on input line 403.
+
+
+LaTeX Warning: Reference `eq:weights_update' on page 6 undefined on input line 403.
+
+
+Overfull \hbox (2.30327pt too wide) detected at line 414
+[]
+ []
+
+
+LaTeX Warning: Reference `eq:mfk_m_approx' on page 6 undefined on input line 416.
+
+
+LaTeX Warning: Reference `eq:kf_w_update' on page 6 undefined on input line 416.
+
+
+Overfull \hbox (17.73885pt too wide) detected at line 462
+[]
+ []
+
+
+Overfull \hbox (12.40457pt too wide) detected at line 480
+[]
+ []
+
+
+Overfull \hbox (10.94673pt too wide) detected at line 489
+[]
+ []
+
+
+LaTeX Warning: Reference `eq:active_rows_weights_update' on page 6 undefined on input line 490.
+
+
+LaTeX Warning: Reference `eq:H_inverse_update' on page 6 undefined on input line 490.
+
+
+LaTeX Warning: Reference `fig:recursive' on page 6 undefined on input line 490.
+
+<figure/rbf/recursive.png, id=49, 1291.82625pt x 564.60938pt>
+File: figure/rbf/recursive.png Graphic file (type png)
+<use figure/rbf/recursive.png>
+Package pdftex.def Info: figure/rbf/recursive.png  used on input line 494.
+(pdftex.def)             Requested size: 226.79846pt x 99.11826pt.
+
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [6 <./figure/rbf/recursive.png>]
+
+LaTeX Warning: Reference `RBF_fml' on page 7 undefined on input line 528.
+
+
+LaTeX Warning: Reference `eq:wheel_contact_constraints' on page 7 undefined on input line 542.
+
+<figure/robot_setting/wheel_new.png, id=57, 1549.79pt x 1059.96pt>
+File: figure/robot_setting/wheel_new.png Graphic file (type png)
+<use figure/robot_setting/wheel_new.png>
+Package pdftex.def Info: figure/robot_setting/wheel_new.png  used on input line 546.
+(pdftex.def)             Requested size: 126.0pt x 86.1733pt.
+
+LaTeX Warning: Reference `eq:leg_fk' on page 7 undefined on input line 559.
+
+
+LaTeX Warning: Citation `liosam' on page 7 undefined on input line 603.
+
+
+LaTeX Warning: Reference `sec:imu-preint' on page 7 undefined on input line 603.
+
+
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [7 <./figure/robot_setting/wheel_new.png>]
+
+LaTeX Warning: Citation `loam' on page 8 undefined on input line 605.
+
+
+LaTeX Warning: Citation `liosam' on page 8 undefined on input line 605.
+
+
+LaTeX Warning: Reference `eq:cost_fn' on page 8 undefined on input line 641.
+
+
+LaTeX Warning: Citation `LM_algo' on page 8 undefined on input line 641.
+
+
+LaTeX Warning: Citation `liosam' on page 8 undefined on input line 641.
+
+
+Underfull \hbox (badness 2717) in paragraph at lines 640--642
+\OT1/ptm/m/n/10 In par-tic-u-lar, we min-i-mize [] us-ing the Levenberg--
+ []
+
+
+LaTeX Warning: Reference `eq:residual_manifold_left_wheel' on page 8 undefined on input line 689.
+
+
+Overfull \hbox (16.90994pt too wide) detected at line 793
+[][][]
+ []
+
+
+LaTeX Warning: Reference `J_i' on page 8 undefined on input line 834.
+
+
+LaTeX Warning: Reference `eq:fit_height' on page 8 undefined on input line 841.
+
+
+LaTeX Warning: Reference `eq:rbf_kernel' on page 8 undefined on input line 841.
+
+
+LaTeX Warning: Reference `eq:residual_manifold_left_wheel' on page 8 undefined on input line 842.
+
+
+LaTeX Warning: Reference `J_i' on page 8 undefined on input line 842.
+
+
+LaTeX Warning: Reference `eq:manidolf_grad_detail1' on page 8 undefined on input line 842.
+
+
+LaTeX Warning: Reference `eq:manidolf_grad_detail5' on page 8 undefined on input line 842.
+
+
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [8]
+
+LaTeX Warning: Reference `recur_RBF' on page 9 undefined on input line 845.
+
+
+LaTeX Warning: Reference `eq:kf_w_update' on page 9 undefined on input line 845.
+
+
+LaTeX Warning: Reference `eq:active_rows_weights_update' on page 9 undefined on input line 845.
+
+
+LaTeX Warning: Reference `eq:H_inverse_update' on page 9 undefined on input line 845.
+
+
+LaTeX Warning: Reference `fig:robot-setting' on page 9 undefined on input line 850.
+
+
+LaTeX Warning: Reference `sec:intro' on page 9 undefined on input line 853.
+
+<figure/map_env/dataset.png, id=66, 592.1322pt x 276.0714pt>
+File: figure/map_env/dataset.png Graphic file (type png)
+<use figure/map_env/dataset.png>
+Package pdftex.def Info: figure/map_env/dataset.png  used on input line 863.
+(pdftex.def)             Requested size: 252.0pt x 117.49097pt.
+
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [9 <./figure/map_env/dataset.png>]
+<figure/result/boxplot_lambda.png, id=71, 763.8939pt x 216.81pt>
+File: figure/result/boxplot_lambda.png Graphic file (type png)
+<use figure/result/boxplot_lambda.png>
+Package pdftex.def Info: figure/result/boxplot_lambda.png  used on input line 889.
+(pdftex.def)             Requested size: 239.39923pt x 67.94482pt.
+
+
+LaTeX Warning: Reference `fig:boxplot' on page 10 undefined on input line 921.
+
+<figure/result/height.png, id=72, 951.555pt x 593.21625pt>
+File: figure/result/height.png Graphic file (type png)
+<use figure/result/height.png>
+Package pdftex.def Info: figure/result/height.png  used on input line 925.
+(pdftex.def)             Requested size: 226.79846pt x 141.38817pt.
+
+LaTeX Warning: Reference `fig:height' on page 10 undefined on input line 930.
+
+
+LaTeX Warning: Reference `fig:height' on page 10 undefined on input line 930.
+
+
+LaTeX Warning: Reference `fig:height' on page 10 undefined on input line 930.
+
+
+LaTeX Warning: Reference `fig:height' on page 10 undefined on input line 930.
+
+<figure/result/total_hist_0405.png, id=73, 902.8932pt x 279.9258pt>
+File: figure/result/total_hist_0405.png Graphic file (type png)
+<use figure/result/total_hist_0405.png>
+Package pdftex.def Info: figure/result/total_hist_0405.png  used on input line 934.
+(pdftex.def)             Requested size: 474.71906pt x 147.1768pt.
+
+LaTeX Warning: Reference `fig:error_height' on page 10 undefined on input line 939.
+
+
+LaTeX Warning: Reference `fig:garden-results' on page 10 undefined on input line 940.
+
+
+LaTeX Warning: Reference `fig:error_height' on page 10 undefined on input line 942.
+
+
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [10
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+ <./figure/result/boxplot_lambda.png> <./figure/result/height.png>]
+
+LaTeX Warning: Reference `tab:ablation_manifold' on page 11 undefined on input line 948.
+
+\width=\dimen175
+\width=\dimen176
+
+LaTeX Warning: Reference `tab:ablation_center_selection' on page 11 undefined on input line 998.
+
+\width=\dimen177
+
+LaTeX Warning: Reference `tab:ablation_gpu_acceleration' on page 11 undefined on input line 1021.
+
+
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [11
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+ <./figure/result/total_hist_0405.png>]
+
+LaTeX Warning: Reference `tab:terrain_observation_stress' on page 12 undefined on input line 1028.
+
+\width=\dimen178
+
+LaTeX Warning: Citation `fastlio2' on page 12 undefined on input line 1054.
+
+
+LaTeX Warning: Citation `roloslam' on page 12 undefined on input line 1054.
+
+
+LaTeX Warning: Citation `leg-kilo' on page 12 undefined on input line 1054.
+
+
+LaTeX Warning: Citation `glim' on page 12 undefined on input line 1054.
+
+
+LaTeX Warning: Citation `wl-slam' on page 12 undefined on input line 1054.
+
+
+LaTeX Warning: Reference `tab:baseline_inputs' on page 12 undefined on input line 1056.
+
+\width=\dimen179
+<figure/traj/new_stair_drift.png, id=83, 1197.72469pt x 795.72281pt>
+File: figure/traj/new_stair_drift.png Graphic file (type png)
+<use figure/traj/new_stair_drift.png>
+Package pdftex.def Info: figure/traj/new_stair_drift.png  used on input line 1096.
+(pdftex.def)             Requested size: 464.39685pt x 308.52151pt.
+
+LaTeX Warning: Reference `fig:stair_drift' on page 12 undefined on input line 1101.
+
+<figure/traj/drift_new.png, id=84, 1482.53876pt x 886.31125pt>
+File: figure/traj/drift_new.png Graphic file (type png)
+<use figure/traj/drift_new.png>
+Package pdftex.def Info: figure/traj/drift_new.png  used on input line 1107.
+(pdftex.def)             Requested size: 239.39923pt x 143.111pt.
+
+LaTeX Warning: Reference `fig:garden-results' on page 12 undefined on input line 1111.
+
+
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [12]
+
+LaTeX Warning: Reference `fig:traj' on page 13 undefined on input line 1113.
+
+<figure/traj/new_garden_xy_plus_z.png, id=88, 906.38625pt x 974.64125pt>
+File: figure/traj/new_garden_xy_plus_z.png Graphic file (type png)
+<use figure/traj/new_garden_xy_plus_z.png>
+Package pdftex.def Info: figure/traj/new_garden_xy_plus_z.png  used on input line 1116.
+(pdftex.def)             Requested size: 226.79846pt x 243.86792pt.
+
+LaTeX Warning: Reference `fig:traj' on page 13 undefined on input line 1120.
+
+
+LaTeX Warning: Reference `tab:ape' on page 13 undefined on input line 1122.
+
+
+LaTeX Warning: Reference `tab:rpe' on page 13 undefined on input line 1122.
+
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [13
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+ <./figure/traj/new_stair_drift.png> <./figure/traj/drift_new.png (PNG copy)>]
+\width=\dimen180
+
+
+LaTeX Warning: Citation `ATE' on page 14 undefined on input line 1129.
+
+
+LaTeX Warning: Citation `fastlio2' on page 14 undefined on input line 1189.
+
+
+LaTeX Warning: Citation `roloslam' on page 14 undefined on input line 1189.
+
+
+LaTeX Warning: Citation `leg-kilo' on page 14 undefined on input line 1189.
+
+
+LaTeX Warning: Citation `glim' on page 14 undefined on input line 1189.
+
+
+LaTeX Warning: Citation `wl-slam' on page 14 undefined on input line 1189.
+
+\width=\dimen181
+
+LaTeX Warning: Citation `ATE' on page 14 undefined on input line 1197.
+
+
+LaTeX Warning: Citation `fastlio2' on page 14 undefined on input line 1257.
+
+
+LaTeX Warning: Citation `roloslam' on page 14 undefined on input line 1257.
+
+
+LaTeX Warning: Citation `leg-kilo' on page 14 undefined on input line 1257.
+
+
+LaTeX Warning: Citation `glim' on page 14 undefined on input line 1257.
+
+
+LaTeX Warning: Citation `wl-slam' on page 14 undefined on input line 1257.
+
+<figure/map_env/wet_grass.png, id=94, 1031.855pt x 515.9275pt>
+File: figure/map_env/wet_grass.png Graphic file (type png)
+<use figure/map_env/wet_grass.png>
+Package pdftex.def Info: figure/map_env/wet_grass.png  used on input line 1277.
+(pdftex.def)             Requested size: 226.79846pt x 113.39418pt.
+
+LaTeX Warning: Reference `tab:wet_grass_stress' on page 14 undefined on input line 1282.
+
+\width=\dimen182
+
+LaTeX Warning: Reference `fig:m20_staircase_map' on page 14 undefined on input line 1316.
+
+
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [14
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+ <./figure/traj/new_garden_xy_plus_z.png (PNG copy)> <./figure/map_env/wet_grass.png (PNG copy)>]
+Underfull \vbox (badness 3849) has occurred while \output is active []
+
+<figure/robot_setting/m20.png, id=98, 417.05812pt x 183.18437pt>
+File: figure/robot_setting/m20.png Graphic file (type png)
+<use figure/robot_setting/m20.png>
+Package pdftex.def Info: figure/robot_setting/m20.png  used on input line 1324.
+(pdftex.def)             Requested size: 159.95874pt x 70.25925pt.
+<figure/traj/m20_stair_drift3.png, id=99, 1656.1875pt x 910.40125pt>
+File: figure/traj/m20_stair_drift3.png Graphic file (type png)
+<use figure/traj/m20_stair_drift3.png>
+Package pdftex.def Info: figure/traj/m20_stair_drift3.png  used on input line 1330.
+(pdftex.def)             Requested size: 350.87622pt x 192.87077pt.
+ (./jsen.bbl
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [15])
+Overfull \vbox (5.0pt too high) has occurred while \output is active []
+
+ [16 <./figure/robot_setting/m20.png> <./figure/traj/m20_stair_drift3.png (PNG copy)>] (./jsen.aux)
+
+LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+ ) 
+Here is how much of TeX's memory you used:
+ 8957 strings out of 476025
+ 196171 string characters out of 5791021
+ 1908382 words of memory out of 5000000
+ 29223 multiletter control sequences out of 15000+600000
+ 598826 words of font info for 177 fonts, out of 8000000 for 9000
+ 1141 hyphenation exceptions out of 8191
+ 73i,23n,77p,1769b,600s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbsy10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmbsy7.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx7.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib7.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmss9.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/euler/eufm10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/helvetic/uhvbo8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/helvetic/uhvro8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on jsen.pdf (16 pages, 14152851 bytes).
+PDF statistics:
+ 229 PDF objects out of 1000 (max. 8388607)
+ 126 compressed objects within 2 object streams
+ 0 named destinations out of 1000 (max. 500000)
+ 76 words of extra memory for PDF output out of 10000 (max. 10000000)
+

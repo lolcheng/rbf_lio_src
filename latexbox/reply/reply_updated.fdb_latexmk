@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1782815612 "e:/rbf_lio_src/latexbox/reply/reply.tex" "reply.pdf" "reply" 1782815625 0
+["pdflatex"] 1783933924 "e:/rbf_lio_src/latexbox/reply/reply_updated.tex" "reply_updated.pdf" "reply_updated" 1783933930 0
   "d:/latex/texlive/2023/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc" 1682738343 2375 baa924870cfb487815765f9094cf3728 ""
   "d:/latex/texlive/2023/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc" 1682738343 3486 c7eadf5dcc57b3b2d11736679f6636ba ""
   "d:/latex/texlive/2023/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc" 1682738343 2405 5dcf2c1b967ee25cc46c58cd52244aed ""
@@ -125,13 +125,13 @@
   "d:/latex/texlive/2023/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1682739855 4662816 3ec0b522c2e63e1f6fc61f984059246e ""
   "d:/latex/texlive/2023/texmf-var/web2c/pdftex/pdflatex.fmt" 1682740066 7883427 4f15f80e7da2efe9808cd3442ed648cb ""
   "d:/latex/texlive/2023/texmf.cnf" 1682739829 713 e69b156964470283e0530f5060668171 ""
-  "e:/rbf_lio_src/latexbox/reply/reply.tex" 1782815601 19287 5a915f000879ce114a798564020f95f6 ""
-  "reply.aux" 1782815624 554 1946bb2d40f231db7fb58bc3ffb28649 "pdflatex"
-  "reply.out" 1782815622 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
-  "reply.tex" 1782815601 19287 5a915f000879ce114a798564020f95f6 ""
+  "e:/rbf_lio_src/latexbox/reply/reply_updated.tex" 1783933923 20224 a9e235b7c44cc38c4caa386466df10cd ""
+  "reply_updated.aux" 1783933930 554 1946bb2d40f231db7fb58bc3ffb28649 "pdflatex"
+  "reply_updated.out" 1783933929 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "reply_updated.tex" 1783933923 20224 a9e235b7c44cc38c4caa386466df10cd ""
   (generated)
-  "reply.aux"
-  "reply.log"
-  "reply.out"
-  "reply.pdf"
+  "reply_updated.aux"
+  "reply_updated.log"
+  "reply_updated.out"
+  "reply_updated.pdf"
   (rewritten before read)

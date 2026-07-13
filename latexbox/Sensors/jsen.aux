@@ -1,0 +1,185 @@
+\relax 
+\@writefile{toc}{\contentsline {section}{\numberline {I}\textcolor {nblue}{Introduction}}{1}{}\protected@file@percent }
+\newlabel{sec:intro}{{I}{1}}
+\citation{fastlio2}
+\citation{glim}
+\citation{leg-kilo}
+\citation{roloslam}
+\citation{wl-slam}
+\citation{loam}
+\citation{liosam}
+\citation{fastlio2,fastlio}
+\citation{glim}
+\citation{leg-kilo}
+\citation{wl-slam}
+\citation{vilen}
+\citation{liko}
+\citation{roloslam}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Robot platform used in our experiments. An inverted Mid-360 LiDAR is mounted on the robot and used in all experiments. The platform is also equipped with a GPS+RTK module (red) and joint sensors (green) for kinematic state estimation. (a) side view, (b) front view, and (c) LiDAR field of view.}}{2}{}\protected@file@percent }
+\newlabel{fig:robot-setting}{{1}{2}}
+\@writefile{toc}{\contentsline {section}{\numberline {II}\textcolor {nblue}{Related Work}}{2}{}\protected@file@percent }
+\citation{ars-slam}
+\citation{frl-slam}
+\citation{elevation_map_2014}
+\citation{elevation_map_2018}
+\citation{elevation_map_gpu}
+\citation{lio_gc}
+\citation{elevation_map_gp}
+\citation{rbf2001}
+\citation{rbf_air}
+\citation{OptVec}
+\@writefile{toc}{\contentsline {section}{\numberline {III}\textcolor {nblue}{Preliminaries and Problem Formulation}}{3}{}\protected@file@percent }
+\newlabel{sec:problem_formulation}{{III}{3}}
+\citation{rbf2001}
+\newlabel{eq:problem_scan_matching}{{2}{4}}
+\newlabel{eq:problem_local_plane}{{4}{4}}
+\newlabel{eq:problem_terrain_function}{{5}{4}}
+\newlabel{eq:problem_manifold_residual}{{6}{4}}
+\newlabel{eq:problem_total_cost}{{7}{4}}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}\textcolor {nblue}{The RBF-based Terrain Approximation}}{4}{}\protected@file@percent }
+\newlabel{sec:RBF_approximation}{{IV}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-A}\textcolor {subsectioncolor}{The RBF Approximation Model}}{4}{}\protected@file@percent }
+\newlabel{sec: RBF_approximation_model}{{IV-A}{4}}
+\newlabel{RBF_fml}{{8}{4}}
+\newlabel{eq:RBF_def}{{9}{4}}
+\citation{ridge}
+\citation{ridge}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces The RBF center selection strategy illustration on $xoy$-plane. Only candidate centers with sufficient nearby LiDAR support are retained.}}{5}{}\protected@file@percent }
+\newlabel{fig:kd_tree}{{2}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-B}\textcolor {subsectioncolor}{The RBF Weight Estimate by Ridge Regression}}{5}{}\protected@file@percent }
+\newlabel{sec_LS}{{IV-B}{5}}
+\newlabel{eq:stochastic_vector}{{10}{5}}
+\newlabel{eq:fit_height}{{11}{5}}
+\newlabel{eq:conditional_expectation}{{12}{5}}
+\newlabel{eq:moment_equality}{{13}{5}}
+\newlabel{eq:RBF_estimator}{{14}{5}}
+\newlabel{eq:mm_corresponding_obj_fun}{{16}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-C}\textcolor {subsectioncolor}{The Recursive RBF Weight Update}}{6}{}\protected@file@percent }
+\newlabel{recur_RBF}{{IV-C}{6}}
+\newlabel{eq:weights_update}{{19a}{6}}
+\newlabel{eq:H_update}{{19b}{6}}
+\newlabel{eq:rbf_kernel}{{20a}{6}}
+\newlabel{eq:mfk_m_approx}{{20b}{6}}
+\newlabel{eq:kf_w_update}{{21}{6}}
+\newlabel{eq:active_rows_weights_update}{{22}{6}}
+\newlabel{eq:H_inverse_update}{{23}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Illustration of the recursive RBF weight update on the $xoy$-plane. Only the weights associated with the active RBF centers (gray) are updated, since they are supported by the newly received observations.}}{6}{}\protected@file@percent }
+\newlabel{fig:recursive}{{3}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}\textcolor {nblue}{The LIO with the Manifold Constraint}}{6}{}\protected@file@percent }
+\newlabel{LIO_MC}{{V}{6}}
+\citation{liosam}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-A}\textcolor {subsectioncolor}{Leg Kinematics and Wheel–Terrain Contact}}{7}{}\protected@file@percent }
+\newlabel{eq:leg_fk}{{25}{7}}
+\newlabel{eq:geom_constraints}{{27}{7}}
+\newlabel{eq:wheel_contact_constraints}{{28}{7}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Illustration of wheel–terrain contact.}}{7}{}\protected@file@percent }
+\newlabel{fig:wheel}{{4}{7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-B}\textcolor {subsectioncolor}{IMU Pre-integration}}{7}{}\protected@file@percent }
+\newlabel{sec:imu-preint}{{V-B}{7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {V-C}\textcolor {subsectioncolor}{The Manifold Constraints}}{7}{}\protected@file@percent }
+\newlabel{eq:residual_manifold_left_wheel}{{31}{7}}
+\citation{loam}
+\citation{liosam}
+\citation{LM_algo}
+\citation{liosam}
+\newlabel{eq:J_M_new}{{33}{8}}
+\newlabel{eq:cost_fn}{{34}{8}}
+\newlabel{J_i}{{35}{8}}
+\newlabel{eq:manidolf_grad_detail1}{{37}{8}}
+\newlabel{eq:manidolf_grad_detail2}{{38}{8}}
+\newlabel{eq:manidolf_grad_detail3}{{39}{8}}
+\newlabel{eq:manidolf_grad_detail4}{{40}{8}}
+\newlabel{eq:manidolf_grad_detail5}{{42}{8}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}\textcolor {nblue}{GPU Acceleration}}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VII}\textcolor {nblue}{Experiments}}{9}{}\protected@file@percent }
+\newlabel{sec:experiment}{{VII}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {VII-A}\textcolor {subsectioncolor}{The Dataset}}{9}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Dataset scenarios: (a) Staircase Scene, (b) Artificial Hill, (c) Rose Garden, (d) Botanical Garden and (e) Indoor Staircase Only. These datasets cover diverse terrain elevations, and each environment contains distinct stair structures for evaluating the $z$-axis localization performance of different methods.}}{9}{}\protected@file@percent }
+\newlabel{fig:dataset-env}{{5}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {VII-B}\textcolor {subsectioncolor}{RBF-based Terrain Approximation Result}}{10}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Boxplots of the terrain-approximation error for different values of \(\lambda \) on the Rose Garden dataset.}}{10}{}\protected@file@percent }
+\newlabel{fig:boxplot}{{6}{10}}
+\newlabel{eq:terrain_approximation_error}{{44}{10}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces RBF-based terrain approximation in different environments: (a) flat area, (b) garden pathway, and (c) staircase scene. The colored boxes indicate corresponding objects or local structures across the results.}}{10}{}\protected@file@percent }
+\newlabel{fig:height}{{7}{10}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {VII-C}\textcolor {subsectioncolor}{Ablation Study}}{10}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces (a) Histogram of the computation time for RBF weight updates on the GPU. (b) Histogram of the computation time for RBF kernel-matrix evaluation on the GPU. (c) Histogram of the computation time for scan matching on the GPU and CPU. (d) Histogram of the terrain-approximation error on the remaining scenarios in the dataset after excluding the top 1\% outliers.}}{11}{}\protected@file@percent }
+\newlabel{fig:error_height}{{8}{11}}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces \textcolor {blue}{Ablation study of the terrain manifold constraint. Values denote ATE RMSE in meters, and the values in parentheses denote the corresponding $z$-axis ATE RMSE.}}}{11}{}\protected@file@percent }
+\newlabel{tab:ablation_manifold}{{I}{11}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces \textcolor {blue}{Ablation study of the adaptive RBF center selection strategy on the Rose Garden sequence. The RBF time is the sum of kernel-matrix construction time and weight-update time.}}}{11}{}\protected@file@percent }
+\newlabel{tab:ablation_center_selection}{{II}{11}}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces \textcolor {blue}{Ablation study of GPU acceleration for online RBF terrain approximation on the Rose Garden sequence. The total RBF time is the sum of kernel-matrix construction time, weight-solving time, and terrain-evaluation time.}}}{11}{}\protected@file@percent }
+\newlabel{tab:ablation_gpu_acceleration}{{III}{11}}
+\citation{fastlio2}
+\citation{roloslam}
+\citation{leg-kilo}
+\citation{glim}
+\citation{wl-slam}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces \textcolor {blue}{Robustness test under degraded terrain observations on the Rose Garden sequence. The full-cloud validation error is computed on the original full terrain point cloud of the same frame. Error values denote mean / 95\% vertical residuals in meters.}}}{12}{}\protected@file@percent }
+\newlabel{tab:terrain_observation_stress}{{IV}{12}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {VII-D}\textcolor {subsectioncolor}{Robustness to Degraded Terrain Observations}}{12}{}\protected@file@percent }
+\newlabel{subsec:terrain_observation_stress}{{VII-D}{12}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {VII-E}\textcolor {subsectioncolor}{Comparison Results}}{12}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces \textcolor {blue}{Sensor measurements and additional geometric information used by each method in the comparison.}}}{13}{}\protected@file@percent }
+\newlabel{tab:baseline_inputs}{{V}{13}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Qualitative comparison of point cloud maps generated in an indoor staircase-only scenario. (a) Reference photograph of the environment. Mapping results produced by (b) RBF-LIO, (c.1) Wheel-Legged SLAM, (c.2) top view of Wheel-Legged SLAM, (d) FAST-LIO2, (e) Leg-KILO, and (f) GLIM. The zoomed-in views highlight the staircase structure reconstructed by each method. The dashed red rectangles indicate the same vertical plane of a single step for visual comparison.}}{13}{}\protected@file@percent }
+\newlabel{fig:stair_drift}{{9}{13}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Visualization of the mapping results: (a) RBF-LIO on the Rose Garden dataset, (b) Fast-LIO2 on the Rose Garden dataset, (c) RBF-LIO on a staircase in a feature-rich environment, (d) Wheel-Legged SLAM in the same environment as (c), (e) RBF-LIO on the Botanical Garden dataset, and (f) Leg-KILO on the Botanical Garden dataset.}}{13}{}\protected@file@percent }
+\newlabel{fig:garden-results}{{10}{13}}
+\citation{ATE}
+\citation{fastlio2}
+\citation{roloslam}
+\citation{leg-kilo}
+\citation{glim}
+\citation{wl-slam}
+\citation{ATE}
+\citation{fastlio2}
+\citation{roloslam}
+\citation{leg-kilo}
+\citation{glim}
+\citation{wl-slam}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Trajectories of different methods on the Rose Garden dataset: projection on the \(xoy\)-plane and evolution along the \(z\)-axis.}}{14}{}\protected@file@percent }
+\newlabel{fig:traj}{{11}{14}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {VII-F}\textcolor {subsectioncolor}{Wet-Grass Stress Test}}{14}{}\protected@file@percent }
+\newlabel{subsec:wet_grass_stress}{{VII-F}{14}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Wet-grass scenario.}}{14}{}\protected@file@percent }
+\newlabel{fig:traj}{{12}{14}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {VII-G}\textcolor {subsectioncolor}{Cross-Platform Staircase Stress Test}}{14}{}\protected@file@percent }
+\newlabel{subsec:m20_cross_platform}{{VII-G}{14}}
+\bibstyle{IEEEtran}
+\bibdata{refs}
+\bibcite{fastlio2}{1}
+\bibcite{glim}{2}
+\bibcite{leg-kilo}{3}
+\@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces ATE\cite  {ATE} (m) for different methods. Values in parentheses denote $z$-axis errors. Slash means failure.}}{15}{}\protected@file@percent }
+\newlabel{tab:ape}{{VI}{15}}
+\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces RTE\cite  {ATE} (m) ($\Delta t=0.1\,\mathrm  {s}$) for different methods. Values in parentheses denote $z$-axis errors. Slash means failure.}}{15}{}\protected@file@percent }
+\newlabel{tab:rpe}{{VII}{15}}
+\@writefile{lot}{\contentsline {table}{\numberline {VIII}{\ignorespaces \textcolor {blue}{Wet-grass stress test under a slippery-surface condition. ATE, $z$-ATE, and RTE are reported in meters.}}}{15}{}\protected@file@percent }
+\newlabel{tab:wet_grass_stress}{{VIII}{15}}
+\@writefile{toc}{\contentsline {section}{\numberline {VIII}\textcolor {nblue}{Conclusion}}{15}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{15}{}\protected@file@percent }
+\bibcite{roloslam}{4}
+\bibcite{wl-slam}{5}
+\bibcite{loam}{6}
+\bibcite{liosam}{7}
+\bibcite{fastlio}{8}
+\bibcite{vilen}{9}
+\bibcite{liko}{10}
+\bibcite{ars-slam}{11}
+\bibcite{frl-slam}{12}
+\bibcite{elevation_map_2014}{13}
+\bibcite{elevation_map_2018}{14}
+\bibcite{elevation_map_gpu}{15}
+\bibcite{lio_gc}{16}
+\bibcite{elevation_map_gp}{17}
+\bibcite{rbf2001}{18}
+\bibcite{rbf_air}{19}
+\bibcite{OptVec}{20}
+\bibcite{ridge}{21}
+\bibcite{LM_algo}{22}
+\bibcite{ATE}{23}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces \textcolor {blue}{Qualitative cross-platform staircase stress test on the M20 four-wheel-legged robot. The LiDAR is mounted in a front-facing configuration, which provides less favorable ground observations than the inverted Mid360 setup used on the Tron1 platform. In the zoomed-in comparison, RBF-LIO preserves a clearer staircase structure, Leg-KILO produces a blurred and thick map, and Wheel-Legged SLAM suffers from severe drift.}}}{16}{}\protected@file@percent }
+\newlabel{fig:m20_staircase_map}{{13}{16}}
+\gdef \@abspage@last{16}

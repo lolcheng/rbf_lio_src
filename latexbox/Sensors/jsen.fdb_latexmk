@@ -2,12 +2,12 @@
 ["bibtex jsen"] 0 "jsen.aux" "jsen.bbl" "jsen" 0 -1
   "./IEEEtran.bst" 1782809963 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
   "./refs.bib" 1782809982 8273 cd06b769c3a6ad7839a7eaf1b1d16b71 ""
-  "jsen.aux" 1783934513 13825 920c36d915e13eb9a9c50517850d2b31 "pdflatex"
+  "jsen.aux" 1784023321 13653 eb68e3220612f95658c7ca4409c380b6 "pdflatex"
   (generated)
   "jsen.bbl"
   "jsen.blg"
   (rewritten before read)
-["pdflatex"] 1783934501 "e:/rbf_lio_src/latexbox/Sensors/jsen.tex" "jsen.pdf" "jsen" 1783934517 2
+["pdflatex"] 1784023311 "e:/rbf_lio_src/latexbox/Sensors/jsen.tex" "jsen.pdf" "jsen" 1784023326 2
   "LOGO-jsen-web.eps" 1782810881 49307 e7082f545ab1d0a8057917736220841d ""
   "d:/latex/texlive/2023/texmf-dist/fonts/enc/dvips/base/8r.enc" 1682737671 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "d:/latex/texlive/2023/texmf-dist/fonts/map/fontname/texfonts.map" 1682737871 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -164,9 +164,8 @@
   "d:/latex/texlive/2023/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1682739855 4662816 3ec0b522c2e63e1f6fc61f984059246e ""
   "d:/latex/texlive/2023/texmf-var/web2c/pdftex/pdflatex.fmt" 1682740066 7883427 4f15f80e7da2efe9808cd3442ed648cb ""
   "d:/latex/texlive/2023/texmf.cnf" 1682739829 713 e69b156964470283e0530f5060668171 ""
-  "e:/rbf_lio_src/latexbox/Sensors/jsen.tex" 1783934479 104118 d9b10c753f8f279cb319665decdc3872 ""
-  "figure/map_env/dataset.png" 1782810132 1519504 a8edf1f08e7adde4ab5c74c20c82d06e ""
-  "figure/map_env/wet_grass.png" 1783932653 1001337 23fd6ca4dbe98f96cafee5351da361f7 ""
+  "e:/rbf_lio_src/latexbox/Sensors/jsen.tex" 1784023285 100345 4680c0019ea9d42016ad7e71e1ff671a ""
+  "figure/map_env/dataset_new.png" 1784023230 1406586 d6c91f60fba3131e62e3cae9bea27696 ""
   "figure/rbf/kd_tree.png" 1782810146 168368 da595e172ece76162ecd503f5d63c421 ""
   "figure/rbf/recursive.png" 1782810149 211740 b3ff962acf094a7fabccf4819c5e24b6 ""
   "figure/result/boxplot_lambda.png" 1782810159 37932 5a88c8253c4fe64a11a296df678794c6 ""
@@ -180,10 +179,10 @@
   "figure/traj/new_garden_xy_plus_z.png" 1782810237 201709 cbb6a9f765c77ad4005e3c1e3f52d74f ""
   "figure/traj/new_stair_drift.png" 1782810246 2810275 bd7cae4c446c5c48ee02ea5efd922018 ""
   "ieeecolor.cls" 1782809959 220757 15ce88bdc456f4b41a9ed9d8d25f828c ""
-  "jsen.aux" 1783934513 13825 920c36d915e13eb9a9c50517850d2b31 "pdflatex"
+  "jsen.aux" 1784023321 13653 eb68e3220612f95658c7ca4409c380b6 "pdflatex"
   "jsen.bbl" 1783934484 6748 591035b181c5f72d3e714346f3383f61 "bibtex jsen"
   "jsen.sty" 1782809970 189 9fef9a671e8e07b7c2e2b4009f00add7 ""
-  "jsen.tex" 1783934479 104118 d9b10c753f8f279cb319665decdc3872 ""
+  "jsen.tex" 1784023285 100345 4680c0019ea9d42016ad7e71e1ff671a ""
   "jsenga.png" 1782809976 226570 7af0819119e95882fe5228e8465a786d ""
   (generated)
   "jsen.aux"

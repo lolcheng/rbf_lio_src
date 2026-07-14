@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.4.29)  13 JUL 2026 17:21
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.4.29)  14 JUL 2026 18:01
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -368,137 +368,139 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 File: translations-basic-dictionary-english.trsl (english translation file `translations-basic-dictionary')
 )
 Package translations Info: loading dictionary `translations-basic-dictionary' for `english'. on input line 58.
-Package color Info: Redefining color nblue on input line 85.
-Package color Info: Redefining color mblue on input line 85.
-LaTeX Font Info:    Trying to load font information for OT1+phv on input line 85.
+Package color Info: Redefining color nblue on input line 84.
+Package color Info: Redefining color mblue on input line 84.
+LaTeX Font Info:    Trying to load font information for OT1+phv on input line 84.
  (d:/latex/texlive/2023/texmf-dist/tex/latex/psnfss/ot1phv.fd
 File: ot1phv.fd 2020/03/25 scalable font definitions for OT1/phv.
 )
 <jsenga.png, id=1, 1749.53625pt x 635.37375pt>
 File: jsenga.png Graphic file (type png)
 <use jsenga.png>
-Package pdftex.def Info: jsenga.png  used on input line 85.
+Package pdftex.def Info: jsenga.png  used on input line 84.
 (pdftex.def)             Requested size: 361.34999pt x 131.22195pt.
-Package color Info: Redefining color nblue on input line 85.
-Package color Info: Redefining color mblue on input line 85.
+Package color Info: Redefining color nblue on input line 84.
+Package color Info: Redefining color mblue on input line 84.
 LaTeX Font Info:    Font shape `OT1/phv/b/it' in size <9> not available
-(Font)              Font shape `OT1/phv/b/sl' tried instead on input line 85.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 85.
+(Font)              Font shape `OT1/phv/b/sl' tried instead on input line 84.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 84.
  (d:/latex/texlive/2023/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 85.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 84.
  (d:/latex/texlive/2023/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-Underfull \hbox (badness 2744) in paragraph at lines 85--85
+Underfull \hbox (badness 2744) in paragraph at lines 84--84
 [][]\OT1/phv/b/sl/9 Abstract\OT1/phv/b/n/9 ---[]Legged-wheel robots
  []
 
 
-Underfull \hbox (badness 4686) in paragraph at lines 85--85
+Underfull \hbox (badness 4686) in paragraph at lines 84--84
 \OT1/phv/b/n/9 ge-om-e-try can lead to se-vere
  []
 
 
-Underfull \hbox (badness 6348) in paragraph at lines 85--85
+Underfull \hbox (badness 6348) in paragraph at lines 84--84
 \OT1/phv/b/n/9 odom-e-try drifts. In par-tic-u-lar,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 85--85
+Underfull \hbox (badness 10000) in paragraph at lines 84--84
 \OT1/phv/b/n/9 abrupt ver-ti-cal ac-cel-er-a-tions
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 85--85
+Underfull \hbox (badness 10000) in paragraph at lines 84--84
 \OT1/phv/b/n/9 caused by un-even sur-faces
  []
 
 
-Underfull \hbox (badness 2027) in paragraph at lines 85--85
+Underfull \hbox (badness 2027) in paragraph at lines 84--84
 \OT1/phv/b/n/9 map-ping ac-cu-racy. To ad-dress
  []
 
 
-Underfull \hbox (badness 5475) in paragraph at lines 85--85
+Underfull \hbox (badness 5475) in paragraph at lines 84--84
 \OT1/phv/b/n/9 aware LiDAR-Inertial odom-e-try
  []
 
-Package color Info: Redefining color nblue on input line 85.
-Package color Info: Redefining color mblue on input line 85.
-Package color Info: Redefining color nblue on input line 85.
-Package color Info: Redefining color mblue on input line 85.
+Package color Info: Redefining color nblue on input line 84.
+Package color Info: Redefining color mblue on input line 84.
+Package color Info: Redefining color nblue on input line 84.
+Package color Info: Redefining color mblue on input line 84.
 File: jsenga.png Graphic file (type png)
 <use jsenga.png>
-Package pdftex.def Info: jsenga.png  used on input line 85.
+Package pdftex.def Info: jsenga.png  used on input line 84.
 (pdftex.def)             Requested size: 361.34999pt x 131.22195pt.
-Package color Info: Redefining color nblue on input line 85.
-Package color Info: Redefining color mblue on input line 85.
+Package color Info: Redefining color nblue on input line 84.
+Package color Info: Redefining color mblue on input line 84.
 
-Underfull \hbox (badness 2744) in paragraph at lines 85--85
+Underfull \hbox (badness 2744) in paragraph at lines 84--84
 [][]\OT1/phv/b/sl/9 Abstract\OT1/phv/b/n/9 ---[]Legged-wheel robots
  []
 
 
-Underfull \hbox (badness 4686) in paragraph at lines 85--85
+Underfull \hbox (badness 4686) in paragraph at lines 84--84
 \OT1/phv/b/n/9 ge-om-e-try can lead to se-vere
  []
 
 
-Underfull \hbox (badness 6348) in paragraph at lines 85--85
+Underfull \hbox (badness 6348) in paragraph at lines 84--84
 \OT1/phv/b/n/9 odom-e-try drifts. In par-tic-u-lar,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 85--85
+Underfull \hbox (badness 10000) in paragraph at lines 84--84
 \OT1/phv/b/n/9 abrupt ver-ti-cal ac-cel-er-a-tions
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 85--85
+Underfull \hbox (badness 10000) in paragraph at lines 84--84
 \OT1/phv/b/n/9 caused by un-even sur-faces
  []
 
 
-Underfull \hbox (badness 2027) in paragraph at lines 85--85
+Underfull \hbox (badness 2027) in paragraph at lines 84--84
 \OT1/phv/b/n/9 map-ping ac-cu-racy. To ad-dress
  []
 
 
-Underfull \hbox (badness 5475) in paragraph at lines 85--85
+Underfull \hbox (badness 5475) in paragraph at lines 84--84
 \OT1/phv/b/n/9 aware LiDAR-Inertial odom-e-try
  []
 
-Package color Info: Redefining color nblue on input line 85.
-Package color Info: Redefining color mblue on input line 85.
-LaTeX Font Info:    Trying to load font information for T1+phv on input line 91.
+Package color Info: Redefining color nblue on input line 84.
+Package color Info: Redefining color mblue on input line 84.
+LaTeX Font Info:    Trying to load font information for T1+phv on input line 90.
 (d:/latex/texlive/2023/texmf-dist/tex/latex/psnfss/t1phv.fd
 File: t1phv.fd 2020/03/25 scalable font definitions for T1/phv.
 )
+
+LaTeX Warning: Reference `fig:robot-setting' on page 1 undefined on input line 98.
+
 Package epstopdf Info: Source file: <LOGO-jsen-web.eps>
 (epstopdf)                    date: 2026-06-30 17:14:41
 (epstopdf)                    size: 49307 bytes
 (epstopdf)             Output file: <LOGO-jsen-web-eps-converted-to.pdf>
 (epstopdf)             Command: <repstopdf --outfile=LOGO-jsen-web-eps-converted-to.pdf LOGO-jsen-web.eps>
-(epstopdf)             \includegraphics on input line 96.
+(epstopdf)             \includegraphics on input line 99.
 runsystem(repstopdf --outfile=LOGO-jsen-web-eps-converted-to.pdf LOGO-jsen-web.eps)...executed safely (allowed).
 
 Package epstopdf Info: Result file: <LOGO-jsen-web-eps-converted-to.pdf>.
 
-
-e:/rbf_lio_src/latexbox/Sensors/jsen.tex:96: Package pdftex.def Error: File `LOGO-jsen-web-eps-converted-to.pdf' not found: using draft setting.
+e:/rbf_lio_src/latexbox/Sensors/jsen.tex:99: Package pdftex.def Error: File `LOGO-jsen-web-eps-converted-to.pdf' not found: using draft setting.
 
 See the pdftex.def package documentation for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.96 
+l.99 
      
 Try typing  <return>  to proceed.
 If that doesn't work, type  X <return>  to quit.
 
-LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 96.
+LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 99.
 (d:/latex/texlive/2023/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
@@ -523,63 +525,67 @@ Overfull \vbox (81.80406pt too high) has occurred while \output is active []
 
 
  <./jsenga.png>]
-
-LaTeX Warning: Reference `fig:robot-setting' on page 2 undefined on input line 99.
-
 <figure/robot_setting/robot_fov_new.jpg, id=17, 1667.22874pt x 585.18625pt>
 File: figure/robot_setting/robot_fov_new.jpg Graphic file (type jpg)
 <use figure/robot_setting/robot_fov_new.jpg>
-Package pdftex.def Info: figure/robot_setting/robot_fov_new.jpg  used on input line 103.
+Package pdftex.def Info: figure/robot_setting/robot_fov_new.jpg  used on input line 102.
 (pdftex.def)             Requested size: 252.0pt x 88.44383pt.
 
-LaTeX Warning: Citation `fastlio2' on page 2 undefined on input line 116.
+
+LaTeX Warning: Citation `fastlio2' on page 2 undefined on input line 115.
 
 
-LaTeX Warning: Citation `glim' on page 2 undefined on input line 116.
+LaTeX Warning: Citation `glim' on page 2 undefined on input line 115.
 
 
-LaTeX Warning: Citation `leg-kilo' on page 2 undefined on input line 116.
+LaTeX Warning: Citation `leg-kilo' on page 2 undefined on input line 115.
 
 
-LaTeX Warning: Citation `roloslam' on page 2 undefined on input line 116.
+LaTeX Warning: Citation `roloslam' on page 2 undefined on input line 115.
 
 
-LaTeX Warning: Citation `wl-slam' on page 2 undefined on input line 116.
+LaTeX Warning: Citation `wl-slam' on page 2 undefined on input line 115.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 116--116
+Underfull \hbox (badness 10000) in paragraph at lines 115--115
 [][][]\OT1/ptm/m/n/8 Available at $\OT1/pcr/m/n/8 https : / / zhanghan-[]tc . github . io / legged _
  []
 
 
-LaTeX Warning: Citation `loam' on page 2 undefined on input line 121.
+LaTeX Warning: Citation `loam' on page 2 undefined on input line 120.
 
 
-LaTeX Warning: Citation `liosam' on page 2 undefined on input line 121.
+LaTeX Warning: Citation `liosam' on page 2 undefined on input line 120.
 
 
-LaTeX Warning: Citation `fastlio2' on page 2 undefined on input line 121.
+LaTeX Warning: Citation `fastlio2' on page 2 undefined on input line 120.
 
 
-LaTeX Warning: Citation `fastlio' on page 2 undefined on input line 121.
+LaTeX Warning: Citation `fastlio' on page 2 undefined on input line 120.
 
 
-LaTeX Warning: Citation `glim' on page 2 undefined on input line 121.
+LaTeX Warning: Citation `glim' on page 2 undefined on input line 120.
 
 
-LaTeX Warning: Citation `leg-kilo' on page 2 undefined on input line 123.
+LaTeX Warning: Citation `leg-kilo' on page 2 undefined on input line 122.
 
 
-LaTeX Warning: Citation `wl-slam' on page 2 undefined on input line 123.
+LaTeX Warning: Citation `wl-slam' on page 2 undefined on input line 122.
 
 
-LaTeX Warning: Citation `vilen' on page 2 undefined on input line 123.
+LaTeX Warning: Citation `vilen' on page 2 undefined on input line 122.
 
 
-LaTeX Warning: Citation `liko' on page 2 undefined on input line 123.
+LaTeX Warning: Citation `liko' on page 2 undefined on input line 122.
 
 
-LaTeX Warning: Citation `roloslam' on page 2 undefined on input line 124.
+LaTeX Warning: Citation `roloslam' on page 2 undefined on input line 123.
+
+
+LaTeX Warning: Citation `ars-slam' on page 2 undefined on input line 123.
+
+
+LaTeX Warning: Citation `frl-slam' on page 2 undefined on input line 123.
 
 
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
@@ -598,314 +604,296 @@ pdfTeX warning: pdflatex.exe: pop empty color page stack 0
 pdfTeX warning: pdflatex.exe: pop empty color page stack 0
  <./figure/robot_setting/robot_fov_new.jpg>]
 
-LaTeX Warning: Citation `ars-slam' on page 3 undefined on input line 126.
+LaTeX Warning: Citation `elevation_map_2014' on page 3 undefined on input line 125.
 
 
-LaTeX Warning: Citation `frl-slam' on page 3 undefined on input line 126.
+LaTeX Warning: Citation `elevation_map_2018' on page 3 undefined on input line 125.
 
 
-Underfull \hbox (badness 1881) in paragraph at lines 126--127
-[]\OT1/ptm/m/n/10 Beyond contact- and kinematics-based meth-ods, some
- []
+LaTeX Warning: Citation `elevation_map_gpu' on page 3 undefined on input line 125.
 
 
-LaTeX Warning: Citation `elevation_map_2014' on page 3 undefined on input line 128.
+LaTeX Warning: Citation `lio_gc' on page 3 undefined on input line 125.
 
 
-LaTeX Warning: Citation `elevation_map_2018' on page 3 undefined on input line 128.
+LaTeX Warning: Citation `elevation_map_gp' on page 3 undefined on input line 127.
 
 
-LaTeX Warning: Citation `elevation_map_gpu' on page 3 undefined on input line 128.
+LaTeX Warning: Citation `rbf2001' on page 3 undefined on input line 127.
 
 
-LaTeX Warning: Citation `lio_gc' on page 3 undefined on input line 128.
+LaTeX Warning: Citation `rbf_air' on page 3 undefined on input line 127.
 
 
-LaTeX Warning: Citation `elevation_map_gp' on page 3 undefined on input line 130.
-
-
-LaTeX Warning: Citation `rbf2001' on page 3 undefined on input line 130.
-
-
-LaTeX Warning: Citation `rbf_air' on page 3 undefined on input line 130.
-
-
-LaTeX Warning: Citation `OptVec' on page 3 undefined on input line 130.
+LaTeX Warning: Citation `OptVec' on page 3 undefined on input line 127.
 
 LaTeX Font Info:    Font shape `OT1/phv/m/it' in size <7> not available
-(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 166.
+(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 167.
 
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
 
  [3]
-Overfull \hbox (6.094pt too wide) detected at line 220
+Overfull \hbox (6.094pt too wide) detected at line 217
 [][][]
  []
 
 
-LaTeX Warning: Reference `sec:problem_formulation' on page 4 undefined on input line 229.
+LaTeX Warning: Reference `sec:problem_formulation' on page 4 undefined on input line 226.
 
 LaTeX Font Info:    Font shape `OT1/phv/m/it' in size <10> not available
-(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 230.
+(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 227.
 
-LaTeX Warning: Citation `rbf2001' on page 4 undefined on input line 231.
+LaTeX Warning: Citation `rbf2001' on page 4 undefined on input line 228.
 
 
-LaTeX Warning: Reference `RBF_fml' on page 4 undefined on input line 258.
+LaTeX Warning: Reference `RBF_fml' on page 4 undefined on input line 255.
+
+<figure/rbf/kd_tree.png, id=36, 1241.38782pt x 578.91281pt>
+File: figure/rbf/kd_tree.png Graphic file (type png)
+<use figure/rbf/kd_tree.png>
+Package pdftex.def Info: figure/rbf/kd_tree.png  used on input line 275.
+(pdftex.def)             Requested size: 226.79846pt x 105.76334pt.
+
+LaTeX Warning: Reference `fig:kd_tree' on page 4 undefined on input line 280.
 
 
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
 
  [4]
-<figure/rbf/kd_tree.png, id=41, 1241.38782pt x 578.91281pt>
-File: figure/rbf/kd_tree.png Graphic file (type png)
-<use figure/rbf/kd_tree.png>
-Package pdftex.def Info: figure/rbf/kd_tree.png  used on input line 278.
-(pdftex.def)             Requested size: 226.79846pt x 105.76334pt.
+
+LaTeX Warning: Reference `RBF_fml' on page 5 undefined on input line 284.
 
 
-LaTeX Warning: Reference `fig:kd_tree' on page 5 undefined on input line 283.
+LaTeX Warning: Reference `RBF_fml' on page 5 undefined on input line 298.
 
 
-LaTeX Warning: Reference `RBF_fml' on page 5 undefined on input line 287.
+LaTeX Warning: Reference `eq:moment_equality' on page 5 undefined on input line 325.
 
 
-LaTeX Warning: Reference `RBF_fml' on page 5 undefined on input line 301.
+LaTeX Warning: Reference `eq:RBF_estimator' on page 5 undefined on input line 340.
 
 
-LaTeX Warning: Reference `eq:moment_equality' on page 5 undefined on input line 328.
+LaTeX Warning: Reference `eq:mm_corresponding_obj_fun' on page 5 undefined on input line 346.
 
 
-LaTeX Warning: Reference `eq:RBF_estimator' on page 5 undefined on input line 343.
+LaTeX Warning: Citation `ridge' on page 5 undefined on input line 346.
 
 
-LaTeX Warning: Reference `eq:mm_corresponding_obj_fun' on page 5 undefined on input line 349.
+LaTeX Warning: Reference `eq:mm_corresponding_obj_fun' on page 5 undefined on input line 354.
 
 
-LaTeX Warning: Citation `ridge' on page 5 undefined on input line 349.
+LaTeX Warning: Citation `ridge' on page 5 undefined on input line 354.
 
 
-LaTeX Warning: Reference `eq:mm_corresponding_obj_fun' on page 5 undefined on input line 357.
+LaTeX Warning: Reference `sec:experiment' on page 5 undefined on input line 354.
 
 
-LaTeX Warning: Citation `ridge' on page 5 undefined on input line 357.
+LaTeX Warning: Reference `RBF_fml' on page 5 undefined on input line 358.
 
 
-LaTeX Warning: Reference `sec:experiment' on page 5 undefined on input line 357.
+LaTeX Warning: Reference `eq:RBF_def' on page 5 undefined on input line 358.
 
 
+LaTeX Warning: Reference `eq:RBF_estimator' on page 5 undefined on input line 360.
+
+LaTeX Font Info:    Trying to load font information for U+euf on input line 368.
+(d:/latex/texlive/2023/texmf-dist/tex/latex/amsfonts/ueuf.fd
+File: ueuf.fd 2013/01/14 v3.01 Euler Fraktur
+)
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
 
  [5 <./figure/rbf/kd_tree.png>]
 
-LaTeX Warning: Reference `RBF_fml' on page 6 undefined on input line 361.
+LaTeX Warning: Reference `eq:mfk_m_approx' on page 6 undefined on input line 399.
 
 
-LaTeX Warning: Reference `eq:RBF_def' on page 6 undefined on input line 361.
+LaTeX Warning: Reference `eq:H_update' on page 6 undefined on input line 400.
 
 
-LaTeX Warning: Reference `eq:RBF_estimator' on page 6 undefined on input line 363.
-
-LaTeX Font Info:    Trying to load font information for U+euf on input line 371.
-(d:/latex/texlive/2023/texmf-dist/tex/latex/amsfonts/ueuf.fd
-File: ueuf.fd 2013/01/14 v3.01 Euler Fraktur
-)
-
-LaTeX Warning: Reference `eq:mfk_m_approx' on page 6 undefined on input line 402.
+LaTeX Warning: Reference `eq:weights_update' on page 6 undefined on input line 400.
 
 
-LaTeX Warning: Reference `eq:H_update' on page 6 undefined on input line 403.
-
-
-LaTeX Warning: Reference `eq:weights_update' on page 6 undefined on input line 403.
-
-
-Overfull \hbox (2.30327pt too wide) detected at line 414
+Overfull \hbox (2.30327pt too wide) detected at line 411
 []
  []
 
 
-LaTeX Warning: Reference `eq:mfk_m_approx' on page 6 undefined on input line 416.
+LaTeX Warning: Reference `eq:mfk_m_approx' on page 6 undefined on input line 413.
 
 
-LaTeX Warning: Reference `eq:kf_w_update' on page 6 undefined on input line 416.
+LaTeX Warning: Reference `eq:kf_w_update' on page 6 undefined on input line 413.
 
 
-Overfull \hbox (17.73885pt too wide) detected at line 462
+Overfull \hbox (17.73885pt too wide) detected at line 459
 []
  []
 
 
-Overfull \hbox (12.40457pt too wide) detected at line 480
+Overfull \hbox (12.40457pt too wide) detected at line 477
 []
  []
 
 
-Overfull \hbox (10.94673pt too wide) detected at line 489
+Overfull \hbox (10.94673pt too wide) detected at line 486
 []
  []
 
 
-LaTeX Warning: Reference `eq:active_rows_weights_update' on page 6 undefined on input line 490.
+LaTeX Warning: Reference `eq:active_rows_weights_update' on page 6 undefined on input line 487.
 
 
-LaTeX Warning: Reference `eq:H_inverse_update' on page 6 undefined on input line 490.
+LaTeX Warning: Reference `eq:H_inverse_update' on page 6 undefined on input line 487.
 
 
-LaTeX Warning: Reference `fig:recursive' on page 6 undefined on input line 490.
+LaTeX Warning: Reference `fig:recursive' on page 6 undefined on input line 487.
 
-<figure/rbf/recursive.png, id=49, 1291.82625pt x 564.60938pt>
+<figure/rbf/recursive.png, id=50, 1291.82625pt x 564.60938pt>
 File: figure/rbf/recursive.png Graphic file (type png)
 <use figure/rbf/recursive.png>
-Package pdftex.def Info: figure/rbf/recursive.png  used on input line 494.
+Package pdftex.def Info: figure/rbf/recursive.png  used on input line 491.
 (pdftex.def)             Requested size: 226.79846pt x 99.11826pt.
 
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
 
  [6 <./figure/rbf/recursive.png>]
 
-LaTeX Warning: Reference `RBF_fml' on page 7 undefined on input line 528.
+LaTeX Warning: Reference `RBF_fml' on page 7 undefined on input line 525.
 
 
-LaTeX Warning: Reference `eq:wheel_contact_constraints' on page 7 undefined on input line 542.
+LaTeX Warning: Reference `eq:wheel_contact_constraints' on page 7 undefined on input line 539.
 
 <figure/robot_setting/wheel_new.png, id=57, 1549.79pt x 1059.96pt>
 File: figure/robot_setting/wheel_new.png Graphic file (type png)
 <use figure/robot_setting/wheel_new.png>
-Package pdftex.def Info: figure/robot_setting/wheel_new.png  used on input line 546.
+Package pdftex.def Info: figure/robot_setting/wheel_new.png  used on input line 543.
 (pdftex.def)             Requested size: 126.0pt x 86.1733pt.
 
-LaTeX Warning: Reference `eq:leg_fk' on page 7 undefined on input line 559.
+LaTeX Warning: Reference `eq:leg_fk' on page 7 undefined on input line 556.
 
 
-LaTeX Warning: Citation `liosam' on page 7 undefined on input line 603.
-
-
-LaTeX Warning: Reference `sec:imu-preint' on page 7 undefined on input line 603.
+LaTeX Warning: Citation `liosam' on page 7 undefined on input line 600.
 
 
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
 
  [7 <./figure/robot_setting/wheel_new.png>]
 
-LaTeX Warning: Citation `loam' on page 8 undefined on input line 605.
+LaTeX Warning: Reference `eq:cost_fn' on page 8 undefined on input line 636.
 
 
-LaTeX Warning: Citation `liosam' on page 8 undefined on input line 605.
+LaTeX Warning: Citation `LM_algo' on page 8 undefined on input line 636.
 
 
-LaTeX Warning: Reference `eq:cost_fn' on page 8 undefined on input line 641.
+LaTeX Warning: Citation `liosam' on page 8 undefined on input line 636.
 
 
-LaTeX Warning: Citation `LM_algo' on page 8 undefined on input line 641.
-
-
-LaTeX Warning: Citation `liosam' on page 8 undefined on input line 641.
-
-
-Underfull \hbox (badness 2717) in paragraph at lines 640--642
+Underfull \hbox (badness 2717) in paragraph at lines 635--637
 \OT1/ptm/m/n/10 In par-tic-u-lar, we min-i-mize [] us-ing the Levenberg--
  []
 
 
-LaTeX Warning: Reference `eq:residual_manifold_left_wheel' on page 8 undefined on input line 689.
+LaTeX Warning: Reference `eq:residual_manifold_left_wheel' on page 8 undefined on input line 684.
 
 
-Overfull \hbox (16.90994pt too wide) detected at line 793
+Overfull \hbox (16.90994pt too wide) detected at line 788
 [][][]
  []
 
 
-LaTeX Warning: Reference `J_i' on page 8 undefined on input line 834.
+LaTeX Warning: Reference `J_i' on page 8 undefined on input line 829.
 
 
-LaTeX Warning: Reference `eq:fit_height' on page 8 undefined on input line 841.
+LaTeX Warning: Reference `eq:fit_height' on page 8 undefined on input line 836.
 
 
-LaTeX Warning: Reference `eq:rbf_kernel' on page 8 undefined on input line 841.
+LaTeX Warning: Reference `eq:rbf_kernel' on page 8 undefined on input line 836.
 
 
-LaTeX Warning: Reference `eq:residual_manifold_left_wheel' on page 8 undefined on input line 842.
+LaTeX Warning: Reference `eq:residual_manifold_left_wheel' on page 8 undefined on input line 837.
 
 
-LaTeX Warning: Reference `J_i' on page 8 undefined on input line 842.
+LaTeX Warning: Reference `J_i' on page 8 undefined on input line 837.
 
 
-LaTeX Warning: Reference `eq:manidolf_grad_detail1' on page 8 undefined on input line 842.
+LaTeX Warning: Reference `eq:manidolf_grad_detail1' on page 8 undefined on input line 837.
 
 
-LaTeX Warning: Reference `eq:manidolf_grad_detail5' on page 8 undefined on input line 842.
+LaTeX Warning: Reference `eq:manidolf_grad_detail5' on page 8 undefined on input line 837.
+
+
+LaTeX Warning: Reference `recur_RBF' on page 8 undefined on input line 840.
+
+
+LaTeX Warning: Reference `eq:kf_w_update' on page 8 undefined on input line 840.
+
+
+LaTeX Warning: Reference `eq:active_rows_weights_update' on page 8 undefined on input line 840.
+
+
+LaTeX Warning: Reference `eq:H_inverse_update' on page 8 undefined on input line 840.
 
 
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
 
  [8]
 
-LaTeX Warning: Reference `recur_RBF' on page 9 undefined on input line 845.
+LaTeX Warning: Reference `fig:robot-setting' on page 9 undefined on input line 844.
 
-
-LaTeX Warning: Reference `eq:kf_w_update' on page 9 undefined on input line 845.
-
-
-LaTeX Warning: Reference `eq:active_rows_weights_update' on page 9 undefined on input line 845.
-
-
-LaTeX Warning: Reference `eq:H_inverse_update' on page 9 undefined on input line 845.
-
-
-LaTeX Warning: Reference `fig:robot-setting' on page 9 undefined on input line 850.
-
-
-LaTeX Warning: Reference `sec:intro' on page 9 undefined on input line 853.
-
-<figure/map_env/dataset.png, id=66, 592.1322pt x 276.0714pt>
-File: figure/map_env/dataset.png Graphic file (type png)
-<use figure/map_env/dataset.png>
-Package pdftex.def Info: figure/map_env/dataset.png  used on input line 863.
-(pdftex.def)             Requested size: 252.0pt x 117.49097pt.
+<figure/map_env/dataset_new.png, id=66, 1091.07625pt x 548.0475pt>
+File: figure/map_env/dataset_new.png Graphic file (type png)
+<use figure/map_env/dataset_new.png>
+Package pdftex.def Info: figure/map_env/dataset_new.png  used on input line 850.
+(pdftex.def)             Requested size: 252.0pt x 126.5751pt.
+<figure/result/boxplot_lambda.png, id=67, 763.8939pt x 216.81pt>
+File: figure/result/boxplot_lambda.png Graphic file (type png)
+<use figure/result/boxplot_lambda.png>
+Package pdftex.def Info: figure/result/boxplot_lambda.png  used on input line 876.
+(pdftex.def)             Requested size: 239.39923pt x 67.94482pt.
 
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
 
- [9 <./figure/map_env/dataset.png>]
-<figure/result/boxplot_lambda.png, id=71, 763.8939pt x 216.81pt>
-File: figure/result/boxplot_lambda.png Graphic file (type png)
-<use figure/result/boxplot_lambda.png>
-Package pdftex.def Info: figure/result/boxplot_lambda.png  used on input line 889.
-(pdftex.def)             Requested size: 239.39923pt x 67.94482pt.
+ [9 <./figure/map_env/dataset_new.png (PNG copy)> <./figure/result/boxplot_lambda.png>]
 
-
-LaTeX Warning: Reference `fig:boxplot' on page 10 undefined on input line 921.
+LaTeX Warning: Reference `fig:boxplot' on page 10 undefined on input line 908.
 
 <figure/result/height.png, id=72, 951.555pt x 593.21625pt>
 File: figure/result/height.png Graphic file (type png)
 <use figure/result/height.png>
-Package pdftex.def Info: figure/result/height.png  used on input line 925.
+Package pdftex.def Info: figure/result/height.png  used on input line 912.
 (pdftex.def)             Requested size: 226.79846pt x 141.38817pt.
 
-LaTeX Warning: Reference `fig:height' on page 10 undefined on input line 930.
+LaTeX Warning: Reference `fig:height' on page 10 undefined on input line 917.
 
 
-LaTeX Warning: Reference `fig:height' on page 10 undefined on input line 930.
+LaTeX Warning: Reference `fig:height' on page 10 undefined on input line 917.
 
 
-LaTeX Warning: Reference `fig:height' on page 10 undefined on input line 930.
+LaTeX Warning: Reference `fig:height' on page 10 undefined on input line 917.
 
 
-LaTeX Warning: Reference `fig:height' on page 10 undefined on input line 930.
+LaTeX Warning: Reference `fig:height' on page 10 undefined on input line 917.
 
 <figure/result/total_hist_0405.png, id=73, 902.8932pt x 279.9258pt>
 File: figure/result/total_hist_0405.png Graphic file (type png)
 <use figure/result/total_hist_0405.png>
-Package pdftex.def Info: figure/result/total_hist_0405.png  used on input line 934.
+Package pdftex.def Info: figure/result/total_hist_0405.png  used on input line 921.
 (pdftex.def)             Requested size: 474.71906pt x 147.1768pt.
 
-LaTeX Warning: Reference `fig:error_height' on page 10 undefined on input line 939.
+LaTeX Warning: Reference `fig:error_height' on page 10 undefined on input line 926.
 
 
-LaTeX Warning: Reference `fig:garden-results' on page 10 undefined on input line 940.
+LaTeX Warning: Reference `fig:garden-results' on page 10 undefined on input line 927.
 
 
-LaTeX Warning: Reference `fig:error_height' on page 10 undefined on input line 942.
+LaTeX Warning: Reference `fig:error_height' on page 10 undefined on input line 929.
+
+
+LaTeX Warning: Reference `tab:ablation_manifold' on page 10 undefined on input line 935.
+
+\width=\dimen175
+\width=\dimen176
+
+LaTeX Warning: Reference `tab:ablation_center_selection' on page 10 undefined on input line 985.
 
 
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
@@ -913,18 +901,33 @@ Overfull \vbox (5.0pt too high) has occurred while \output is active []
  [10
 
 pdfTeX warning: pdflatex.exe: pop empty color page stack 0
- <./figure/result/boxplot_lambda.png> <./figure/result/height.png>]
-
-LaTeX Warning: Reference `tab:ablation_manifold' on page 11 undefined on input line 948.
-
-\width=\dimen175
-\width=\dimen176
-
-LaTeX Warning: Reference `tab:ablation_center_selection' on page 11 undefined on input line 998.
-
+ <./figure/result/height.png>]
 \width=\dimen177
 
-LaTeX Warning: Reference `tab:ablation_gpu_acceleration' on page 11 undefined on input line 1021.
+
+LaTeX Warning: Reference `tab:ablation_gpu_acceleration' on page 11 undefined on input line 1008.
+
+
+LaTeX Warning: Reference `tab:terrain_observation_stress' on page 11 undefined on input line 1015.
+
+\width=\dimen178
+
+LaTeX Warning: Citation `fastlio2' on page 11 undefined on input line 1041.
+
+
+LaTeX Warning: Citation `roloslam' on page 11 undefined on input line 1041.
+
+
+LaTeX Warning: Citation `leg-kilo' on page 11 undefined on input line 1041.
+
+
+LaTeX Warning: Citation `glim' on page 11 undefined on input line 1041.
+
+
+LaTeX Warning: Citation `wl-slam' on page 11 undefined on input line 1041.
+
+
+LaTeX Warning: Reference `tab:baseline_inputs' on page 11 undefined on input line 1043.
 
 
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
@@ -933,65 +936,93 @@ Overfull \vbox (5.0pt too high) has occurred while \output is active []
 
 pdfTeX warning: pdflatex.exe: pop empty color page stack 0
  <./figure/result/total_hist_0405.png>]
-
-LaTeX Warning: Reference `tab:terrain_observation_stress' on page 12 undefined on input line 1028.
-
-\width=\dimen178
-
-LaTeX Warning: Citation `fastlio2' on page 12 undefined on input line 1054.
-
-
-LaTeX Warning: Citation `roloslam' on page 12 undefined on input line 1054.
-
-
-LaTeX Warning: Citation `leg-kilo' on page 12 undefined on input line 1054.
-
-
-LaTeX Warning: Citation `glim' on page 12 undefined on input line 1054.
-
-
-LaTeX Warning: Citation `wl-slam' on page 12 undefined on input line 1054.
-
-
-LaTeX Warning: Reference `tab:baseline_inputs' on page 12 undefined on input line 1056.
-
 \width=\dimen179
-<figure/traj/new_stair_drift.png, id=83, 1197.72469pt x 795.72281pt>
+<figure/traj/new_stair_drift.png, id=82, 1197.72469pt x 795.72281pt>
 File: figure/traj/new_stair_drift.png Graphic file (type png)
 <use figure/traj/new_stair_drift.png>
-Package pdftex.def Info: figure/traj/new_stair_drift.png  used on input line 1096.
-(pdftex.def)             Requested size: 464.39685pt x 308.52151pt.
+Package pdftex.def Info: figure/traj/new_stair_drift.png  used on input line 1083.
+(pdftex.def)             Requested size: 490.19843pt x 325.66565pt.
 
-LaTeX Warning: Reference `fig:stair_drift' on page 12 undefined on input line 1101.
 
-<figure/traj/drift_new.png, id=84, 1482.53876pt x 886.31125pt>
+LaTeX Warning: Reference `fig:stair_drift' on page 12 undefined on input line 1088.
+
+
+LaTeX Warning: Reference `fig:garden-results' on page 12 undefined on input line 1090.
+
+<figure/traj/drift_new.png, id=83, 1482.53876pt x 886.31125pt>
 File: figure/traj/drift_new.png Graphic file (type png)
 <use figure/traj/drift_new.png>
-Package pdftex.def Info: figure/traj/drift_new.png  used on input line 1107.
+Package pdftex.def Info: figure/traj/drift_new.png  used on input line 1093.
 (pdftex.def)             Requested size: 239.39923pt x 143.111pt.
 
-LaTeX Warning: Reference `fig:garden-results' on page 12 undefined on input line 1111.
+LaTeX Warning: Reference `fig:traj' on page 12 undefined on input line 1099.
 
+<figure/traj/new_garden_xy_plus_z.png, id=84, 906.38625pt x 974.64125pt>
+File: figure/traj/new_garden_xy_plus_z.png Graphic file (type png)
+<use figure/traj/new_garden_xy_plus_z.png>
+Package pdftex.def Info: figure/traj/new_garden_xy_plus_z.png  used on input line 1102.
+(pdftex.def)             Requested size: 226.79846pt x 243.86792pt.
+
+LaTeX Warning: Reference `tab:ape' on page 12 undefined on input line 1107.
+
+
+LaTeX Warning: Reference `tab:rpe' on page 12 undefined on input line 1107.
+
+\width=\dimen180
+
+LaTeX Warning: Citation `ATE' on page 12 undefined on input line 1114.
+
+
+LaTeX Warning: Citation `fastlio2' on page 12 undefined on input line 1174.
+
+
+LaTeX Warning: Citation `roloslam' on page 12 undefined on input line 1174.
+
+
+LaTeX Warning: Citation `leg-kilo' on page 12 undefined on input line 1174.
+
+
+LaTeX Warning: Citation `glim' on page 12 undefined on input line 1174.
+
+
+LaTeX Warning: Citation `wl-slam' on page 12 undefined on input line 1174.
+
+\width=\dimen181
+
+LaTeX Warning: Citation `ATE' on page 12 undefined on input line 1182.
+
+
+LaTeX Warning: Citation `fastlio2' on page 12 undefined on input line 1242.
+
+
+LaTeX Warning: Citation `roloslam' on page 12 undefined on input line 1242.
+
+
+LaTeX Warning: Citation `leg-kilo' on page 12 undefined on input line 1242.
+
+
+LaTeX Warning: Citation `glim' on page 12 undefined on input line 1242.
+
+
+LaTeX Warning: Citation `wl-slam' on page 12 undefined on input line 1242.
+
+
+LaTeX Warning: Reference `tab:wet_grass_stress' on page 12 undefined on input line 1266.
+
+\width=\dimen182
 
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
 
  [12]
 
-LaTeX Warning: Reference `fig:traj' on page 13 undefined on input line 1113.
-
-<figure/traj/new_garden_xy_plus_z.png, id=88, 906.38625pt x 974.64125pt>
-File: figure/traj/new_garden_xy_plus_z.png Graphic file (type png)
-<use figure/traj/new_garden_xy_plus_z.png>
-Package pdftex.def Info: figure/traj/new_garden_xy_plus_z.png  used on input line 1116.
-(pdftex.def)             Requested size: 226.79846pt x 243.86792pt.
-
-LaTeX Warning: Reference `fig:traj' on page 13 undefined on input line 1120.
+LaTeX Warning: Text page 13 contains only floats.
 
 
-LaTeX Warning: Reference `tab:ape' on page 13 undefined on input line 1122.
+Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
-LaTeX Warning: Reference `tab:rpe' on page 13 undefined on input line 1122.
+
+LaTeX Warning: Text page 13 contains only floats.
 
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
@@ -999,72 +1030,9 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
 
- [13
+ [13 <./figure/traj/new_stair_drift.png>]
 
-pdfTeX warning: pdflatex.exe: pop empty color page stack 0
-
-
-pdfTeX warning: pdflatex.exe: pop empty color page stack 0
-
-
-pdfTeX warning: pdflatex.exe: pop empty color page stack 0
-
-
-pdfTeX warning: pdflatex.exe: pop empty color page stack 0
-
-
-pdfTeX warning: pdflatex.exe: pop empty color page stack 0
- <./figure/traj/new_stair_drift.png> <./figure/traj/drift_new.png (PNG copy)>]
-\width=\dimen180
-
-
-LaTeX Warning: Citation `ATE' on page 14 undefined on input line 1129.
-
-
-LaTeX Warning: Citation `fastlio2' on page 14 undefined on input line 1189.
-
-
-LaTeX Warning: Citation `roloslam' on page 14 undefined on input line 1189.
-
-
-LaTeX Warning: Citation `leg-kilo' on page 14 undefined on input line 1189.
-
-
-LaTeX Warning: Citation `glim' on page 14 undefined on input line 1189.
-
-
-LaTeX Warning: Citation `wl-slam' on page 14 undefined on input line 1189.
-
-\width=\dimen181
-
-LaTeX Warning: Citation `ATE' on page 14 undefined on input line 1197.
-
-
-LaTeX Warning: Citation `fastlio2' on page 14 undefined on input line 1257.
-
-
-LaTeX Warning: Citation `roloslam' on page 14 undefined on input line 1257.
-
-
-LaTeX Warning: Citation `leg-kilo' on page 14 undefined on input line 1257.
-
-
-LaTeX Warning: Citation `glim' on page 14 undefined on input line 1257.
-
-
-LaTeX Warning: Citation `wl-slam' on page 14 undefined on input line 1257.
-
-<figure/map_env/wet_grass.png, id=94, 1031.855pt x 515.9275pt>
-File: figure/map_env/wet_grass.png Graphic file (type png)
-<use figure/map_env/wet_grass.png>
-Package pdftex.def Info: figure/map_env/wet_grass.png  used on input line 1277.
-(pdftex.def)             Requested size: 226.79846pt x 113.39418pt.
-
-LaTeX Warning: Reference `tab:wet_grass_stress' on page 14 undefined on input line 1282.
-
-\width=\dimen182
-
-LaTeX Warning: Reference `fig:m20_staircase_map' on page 14 undefined on input line 1316.
+LaTeX Warning: Reference `fig:m20_staircase_map' on page 14 undefined on input line 1300.
 
 
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
@@ -1078,26 +1046,36 @@ pdfTeX warning: pdflatex.exe: pop empty color page stack 0
 
 
 pdfTeX warning: pdflatex.exe: pop empty color page stack 0
- <./figure/traj/new_garden_xy_plus_z.png (PNG copy)> <./figure/map_env/wet_grass.png (PNG copy)>]
-Underfull \vbox (badness 3849) has occurred while \output is active []
 
-<figure/robot_setting/m20.png, id=98, 417.05812pt x 183.18437pt>
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+ <./figure/traj/drift_new.png (PNG copy)> <./figure/traj/new_garden_xy_plus_z.png (PNG copy)>]
+<figure/robot_setting/m20.png, id=97, 417.05812pt x 183.18437pt>
 File: figure/robot_setting/m20.png Graphic file (type png)
 <use figure/robot_setting/m20.png>
-Package pdftex.def Info: figure/robot_setting/m20.png  used on input line 1324.
-(pdftex.def)             Requested size: 159.95874pt x 70.25925pt.
-<figure/traj/m20_stair_drift3.png, id=99, 1656.1875pt x 910.40125pt>
+Package pdftex.def Info: figure/robot_setting/m20.png  used on input line 1325.
+(pdftex.def)             Requested size: 179.54942pt x 78.86276pt.
+<figure/traj/m20_stair_drift3.png, id=98, 1656.1875pt x 910.40125pt>
 File: figure/traj/m20_stair_drift3.png Graphic file (type png)
 <use figure/traj/m20_stair_drift3.png>
-Package pdftex.def Info: figure/traj/m20_stair_drift3.png  used on input line 1330.
-(pdftex.def)             Requested size: 350.87622pt x 192.87077pt.
- (./jsen.bbl
+Package pdftex.def Info: figure/traj/m20_stair_drift3.png  used on input line 1333.
+(pdftex.def)             Requested size: 239.39923pt x 131.59499pt.
+ (./jsen.bbl)
 Overfull \vbox (5.0pt too high) has occurred while \output is active []
 
- [15])
-Overfull \vbox (5.0pt too high) has occurred while \output is active []
+ [15
 
- [16 <./figure/robot_setting/m20.png> <./figure/traj/m20_stair_drift3.png (PNG copy)>] (./jsen.aux)
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+
+
+pdfTeX warning: pdflatex.exe: pop empty color page stack 0
+ <./figure/robot_setting/m20.png> <./figure/traj/m20_stair_drift3.png (PNG copy)>] (./jsen.aux)
 
 LaTeX Warning: There were undefined references.
 
@@ -1106,18 +1084,18 @@ LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
  ) 
 Here is how much of TeX's memory you used:
- 8957 strings out of 476025
- 196171 string characters out of 5791021
- 1908382 words of memory out of 5000000
- 29223 multiletter control sequences out of 15000+600000
+ 8950 strings out of 476025
+ 195987 string characters out of 5791021
+ 1901382 words of memory out of 5000000
+ 29217 multiletter control sequences out of 15000+600000
  598826 words of font info for 177 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 73i,23n,77p,1769b,600s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 73i,23n,77p,1424b,600s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbsy10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmbsy7.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx7.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib7.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmss9.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/euler/eufm10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/helvetic/uhvbo8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/helvetic/uhvro8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><d:/latex/texlive/2023/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on jsen.pdf (16 pages, 14152851 bytes).
+Output written on jsen.pdf (15 pages, 13210087 bytes).
 PDF statistics:
- 229 PDF objects out of 1000 (max. 8388607)
- 126 compressed objects within 2 object streams
+ 224 PDF objects out of 1000 (max. 8388607)
+ 124 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
- 76 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 71 words of extra memory for PDF output out of 10000 (max. 10000000)
 

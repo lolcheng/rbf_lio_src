@@ -72,8 +72,7 @@
 %An accurate odometry is essential for legged-wheel robots operating in unstructured terrains such as bumpy roads and staircases. Existing methods often suffer from pose drift due to their ignorance of terrain geometry. 
 Legged-wheel robots excel at traversing unstructured terrains, including bumpy roads and staircases. However, in such environments, neglecting terrain geometry can lead to severe odometry drifts. In particular, abrupt vertical accelerations caused by uneven surfaces may introduce significant pose errors along the z-axis, thereby degrading both localization and mapping accuracy. To address this issue,
 we propose a terrain-aware LiDAR-Inertial odometry (LIO) framework that approximates the terrain using Radial Basis Functions (RBFs) whose centers are adaptively selected and weights are recursively updated.
-The resulting smooth terrain manifold enables ``soft constraints" that regularize the odometry optimization and mitigates the $z$-axis pose drift under abrupt elevation changes during robot's maneuver. To ensure the LIO's real-time performance, we further evaluate the RBF-related terms and calculate the inverse of the sparse kernel matrix with GPU parallelization.
-Experiments on unstructured terrains demonstrate that our method achieves higher localization accuracy than the baselines, especially in the scenarios that have continuous height changes or sparse features when abrupt height changes occur.
+The resulting smooth terrain manifold enables ``soft constraints" that regularize the odometry optimization and mitigates the $z$-axis pose drift under abrupt elevation changes during robot's maneuver. To ensure real-time performance, the RBF-related operations are accelerated on the GPU. Experiments on unstructured terrains demonstrate that the proposed method improves localization accuracy and map consistency, especially in scenarios with abrupt elevation changes and sparse geometric features.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -120,10 +119,8 @@ To summarize, the main contributions of this work are three-fold:
 
 LiDAR--inertial odometry (LIO) has been widely studied in recent years. LOAM \cite{loam} achieves accurate real-time odometry and mapping using LiDAR-only input. Later works, such as LIO-SAM \cite{liosam}, Fast-LIO2 \cite{fastlio2, fastlio}, and GLIM \cite{glim}, further improve robustness and accuracy by tightly coupling LiDAR and IMU measurements. However, these general-purpose LIO frameworks do not explicitly model terrain geometry, and therefore often suffer from pose drift when operating on height-varying or unstructured terrain.
 
-To improve state estimation on legged or wheel-legged platforms, several works exploit kinematic or contact information. Leg-KILO \cite{leg-kilo} incorporates leg kinematics and extracts LiDAR points around the foot contact region to construct local contact-plane constraints. In particular, it assumes that the terrain around each foot contact is approximately flat within a radius of 10\,cm. Wheel-Legged SLAM \cite{wl-slam} similarly integrates the kinematic model of wheel-legged robots to improve LiDAR--inertial SLAM. VILENS \cite{vilen} couples leg odometry with visual, inertial, and LiDAR measurements for quadruped robots, but it does not explicitly construct a continuous terrain model. LIKO \cite{liko} fuses LiDAR, IMU, and kinematic measurements from joint encoders and torque-related sensing on a biped robot, and estimates both the robot state and the foot contact position online. While these methods demonstrate the value of contact and kinematic constraints, they generally rely on local planar approximations, discrete contact events, or accurate contact detection and non-slipping assumptions. However, they do not explicitly construct a continuous and differentiable terrain manifold for direct use in gradient-based LIO optimization. As a result, the associated terrain information is usually introduced only through local planar approximations or discrete contact events, rather than as a smooth function of the robot pose. Consequently, it is difficult for such constraints to provide consistent first-order geometric information throughout the iterative optimization process, which limits their ability to continuously correct height and attitude errors on uneven terrain.
-ROLO-SLAM \cite{roloslam} estimates the robot rotation first and then estimates the translation under the rotation constraint. However, for legged-wheel robots operating on uneven terrain, rotation and translation are often strongly coupled due to frequent body tilting. Consequently, such a decoupled strategy may lead to severe drift and degraded robustness.
-
-Beyond contact- and kinematics-based methods, some SLAM systems have also been developed for legged robots from other perspectives. For example, ARS-SLAM \cite{ars-slam} improves spinning-LiDAR SLAM for quadruped robots in large-scale scenarios, while FRL-SLAM \cite{frl-slam} targets lightweight SLAM for quadruped navigation. These methods are relevant to legged-robot SLAM, but they do not focus on terrain-aware LiDAR--inertial estimation with an explicit continuous terrain model.
+To improve state estimation on legged or wheel-legged platforms, several works exploit kinematic or contact information. Leg-KILO \cite{leg-kilo} incorporates leg kinematics and extracts LiDAR points around the foot contact region to construct local contact-plane constraints. In particular, it assumes that the terrain around each foot contact is approximately flat within a radius of 10\,cm. Wheel-Legged SLAM \cite{wl-slam} similarly integrates the kinematic model of wheel-legged robots to improve LiDAR--inertial SLAM. VILENS \cite{vilen} couples leg odometry with visual, inertial, and LiDAR measurements for quadruped robots, but it does not explicitly construct a continuous terrain model. LIKO \cite{liko} fuses LiDAR, IMU, and kinematic measurements from joint encoders and torque-related sensing on a biped robot, and estimates both the robot state and the foot contact position online. While these methods demonstrate the value of contact and kinematic constraints, they generally rely on local planar approximations, discrete contact events, or accurate contact detection and non-slipping assumptions. However, they do not explicitly construct a continuous and differentiable terrain manifold for direct use in gradient-based LIO optimization, which limits their ability to continuously correct height and attitude errors on uneven terrain.
+ROLO-SLAM \cite{roloslam} estimates the robot rotation first and then estimates the translation under the rotation constraint. However, for legged-wheel robots operating on uneven terrain, rotation and translation are often strongly coupled due to frequent body tilting. Consequently, such a decoupled strategy may lead to severe drift and degraded robustness. Other legged-robot SLAM systems, such as ARS-SLAM~\cite{ars-slam} and FRL-SLAM~\cite{frl-slam}, improve robustness from sensing or system-design perspectives, but they do not explicitly build a continuous terrain model for terrain-aware LIO optimization.
 
 These limitations motivate the explicit use of terrain geometry in LIO design. To better capture the geometry of uneven environments, elevation mapping has been widely adopted. Early works on robot-centric elevation maps \cite{elevation_map_2014} and probabilistic terrain representations \cite{elevation_map_2018} improve terrain awareness by incorporating elevation uncertainty. Later methods exploit GPU acceleration for real-time elevation mapping \cite{elevation_map_gpu}. Moreover, based on discrete elevation maps, \cite{lio_gc} leverages terrain slope and ground constraints to improve vertical accuracy in LiDAR--inertial odometry. However, elevation maps are defined on fixed-resolution grids and are therefore not spatially differentiable. As a result, the corresponding constraints are typically derived from discretized grids or local planar patches, which yield only piecewise and non-smooth gradient information and are therefore less suitable for gradient-based optimization.
 
@@ -600,9 +597,7 @@ We assume that the wheels maintain firm contact with the terrain. Accordingly, f
     &\approx \mathbf{0}.
 \end{align}
 
-Next, we incorporate the manifold residuals into the scan-matching optimization. Our LIO framework follows the front-end structure of LIO-SAM \cite{liosam}. In particular, the IMU pre-integration module introduced in Sec.~\ref{sec:imu-preint} is used to provide motion priors between consecutive LiDAR frames, and the associated factor graph is used to update the accelerometer and gyroscope biases.
-
-The scan matching adopted in this work follows the feature-based ICP formulation in LOAM \cite{loam} and LIO-SAM \cite{liosam}. To initialize the ICP optimization, we use the IMU pre-integration between two consecutive frames to estimate the relative motion, which is then composed with the global pose of the previous frame to generate an initial guess for the current frame. More specifically, the scan-matching cost is given by
+\yzl{Next, we incorporate the manifold residuals into the feature-based scan-matching objective. Following the LIO-SAM front-end~\cite{liosam}, the IMU pre-integration module provides the initial guess for each LiDAR frame, while point-to-line and point-to-plane residuals form the original scan-matching cost:}
 \begin{equation}
 \begin{aligned}
     J_{\mathrm{scan}}(\bm\eta_k)
@@ -618,7 +613,7 @@ The scan matching adopted in this work follows the feature-based ICP formulation
     \right\|^2,
 \end{aligned}
 \end{equation}
-with respect to \({}^{\mathrm{O}}\mathbf{R}_{\mathrm{B},k}\) and \({}^{\mathrm{O}}\mathbf{t}_{\mathrm{B},k}\), where \(\mathcal{F}^e_k\) and \(\mathcal{F}^p_k\) denote the sets of edge and planar features in the LiDAR scan at time step \(k\). Here, \(\mathbf{p}^e_{s,k}\) and \(\mathbf{p}^p_{s,k}\) denote the \(s\)-th edge and planar feature points extracted from the scan, while \(\mathbf{d}_e(\cdot)\) and \(\mathbf{d}_p(\cdot)\) are the corresponding point-to-line and point-to-plane residuals.
+where $F^e_k$ and $F^p_k$ denote the edge and planar feature sets, and $d_e(\cdot)$ and $d_p(\cdot)$ are the corresponding point-to-line and point-to-plane residuals.
 
 We then incorporate the manifold residuals into the scan-matching objective as soft constraints for pose regularization. The corresponding manifold cost is defined as
 \begin{equation}\label{eq:J_M_new}
@@ -846,22 +841,14 @@ The proposed LIO framework contains several computationally intensive modules th
 \end{enumerate}
 
 \section{Experiments}\label{sec:experiment}
-We conduct the experiments on the Limx Tron1 legged-wheel robot in outdoor scenarios. Tron1, developed by Limx Dynamics, features a bipedal lower‐body drive with two selectable locomotion modes—\emph{normal} for flat terrain and \emph{off‐road} for stairs and uneven ground. In particular, the ``off‐road locomotion mode" is used in all of the experiments.
-In addition, the following sensors are available for our experiment (as illustrated in Fig.~\ref{fig:robot-setting}).
-\begin{itemize}
-  \item \textbf{Mid360 LiDAR \& IMU:} mounted on a custom shelf attached to the robot's body, providing \SI{10}{\hertz} 3D LiDAR point clouds and \SI{200}{\hertz} inertial measurements.
-  As mentioned earlier in Sec.~\ref{sec:intro}, the top-mounted Mid360 LiDAR is installed in an inverted configuration to increase the density of ground observations for terrain reconstruction by directing most beams toward the terrain rather than the sky or distant objects. This inverted mounting is adopted as a sensing configuration for our experiments, rather than as a prerequisite of the proposed method.
-  \item \textbf{GPS+RTK:} mounted upright atop the robot, delivering \SI{10}{\hertz} position fixes (latitude, longitude, altitude) of the ``ground-truth" trajectory.
-  \item \textbf{Joint sensors:} joint angles are measured with a frequency of \SI{500}{\hertz} via the joint sensors.
-\end{itemize}
-Moreover, we test our method on a laptop equipped with an Intel i5-12490F processor, 32 GB of RAM, and an NVIDIA GeForce RTX 3070 GPU. 
+\yzl{Experiments are conducted on a Limx Tron1 legged-wheel robot operating in off-road locomotion mode. The robot is equipped with an inverted Mid360 LiDAR with its built-in IMU, a GPS+RTK module, and joint sensors, as shown in Fig.~\ref{fig:robot-setting}. The Mid360 provides 10 Hz point clouds and 200 Hz IMU measurements, the GPS+RTK module provides 10 Hz position references, and the joint sensors provide 500 Hz joint-angle measurements. The inverted LiDAR configuration increases the density of ground observations for terrain reconstruction, but it is a sensing configuration rather than a prerequisite of the proposed formulation. All experiments are run on a laptop with an Intel i5-12490F CPU, 32 GB RAM, and an NVIDIA RTX 3070 GPU.}
 
 \subsection{The Dataset}
 
 \begin{figure}[!htpb]
   \centering
-  \includegraphics[width=1\linewidth]{figure/map_env/dataset.png}
-    \caption{Dataset scenarios: (a) Staircase Scene, (b) Artificial Hill, (c) Rose Garden, (d) Botanical Garden and (e) Indoor Staircase Only. These datasets cover diverse terrain elevations, and each environment contains distinct stair structures for evaluating the $z$-axis localization performance of different methods.}
+  \includegraphics[width=1\linewidth]{figure/map_env/dataset_new.png}
+    \caption{Dataset scenarios: (a) Staircase Scene, (b) Artificial Hill, (c) Rose Garden, (d) Botanical Garden, (e) Indoor Staircase Only \cs{and (f) Wet Grass(for stress test only)}. These datasets cover diverse terrain elevations, and each environment contains distinct stair structures for evaluating the $z$-axis localization performance of different methods.}
   \label{fig:dataset-env}
 \end{figure}
 
@@ -943,7 +930,7 @@ Moreover, to demonstrate the real-time performance of the proposed method, we re
 
 \subsection{Ablation Study}
 
-\cs{We conduct three ablation studies to evaluate the main components of the proposed framework. The terrain manifold constraint is evaluated on all sequences with RTK ground truth, while the adaptive center selection and GPU acceleration studies are conducted on the Rose Garden sequence, which contains mixed terrain surfaces and representative height variations. First, we disable the terrain manifold constraint to examine whether the RBF-based wheel--terrain residual contributes to pose estimation. Second, we disable the adaptive RBF center selection strategy to evaluate its influence on terrain-fitting accuracy and online computational cost. Third, we compare the GPU and CPU implementations of the RBF terrain approximation module to quantify the benefit of GPU acceleration. In all ablation experiments, only the target component is changed, while the remaining inputs, parameters, and evaluation settings are kept the same whenever applicable.}
+\cs{We conduct three ablation studies to evaluate the main components of the proposed framework. The terrain manifold constraint is evaluated on all sequences with RTK ground truth, while the adaptive center selection and GPU acceleration studies are conducted on the Rose Garden sequence, which contains mixed terrain surfaces and representative height variations. In all ablation experiments, only the target component is changed, while the remaining inputs, parameters, and evaluation settings are kept the same whenever applicable.}
 
 \cs{To verify the contribution of the proposed terrain manifold constraint, we first conduct an ablation study by disabling the manifold residuals in the scan-matching optimization. As shown in Table~\ref{tab:ablation_manifold}, disabling the terrain manifold constraint has only a limited influence on the overall trajectory-wide ATE. This is expected because the scan-matching term still provides the dominant geometric constraint for horizontal motion, and many portions of the trajectories are locally flat or feature-rich. Nevertheless, the proposed manifold constraint consistently reduces the $z$-axis ATE in all evaluated sequences. The improvement is most evident on the Artificial Hill sequence, where the robot continuously traverses slopes and single-step structures, and the $z$-axis ATE is reduced by 27.2\%. These results indicate that the terrain manifold constraint mainly acts as a vertical geometric regularizer rather than a replacement for LiDAR scan matching.}
 
@@ -995,7 +982,7 @@ w/o adaptive centers & 920.9 / 100.0\% & 0.0939 / 0.3399 & 19.03 ms \\
 \renewcommand{\arraystretch}{1.0}
 \end{table}
 
-\cs{As shown in Table~\ref{tab:ablation_center_selection}, compared with the full version, the average number of active centers increases from 883.8 to 920.9. Since more centers are involved in the fitting process, the mean approximation error is only slightly reduced from 0.0944 m to 0.0939 m. However, this small accuracy change is obtained at the cost of higher computation. In particular, the average RBF computation time increases from 16.88 ms to 19.03 ms. Equivalently, the proposed adaptive center selection reduces the RBF computation time by about 11.3\% while maintaining comparable terrain approximation accuracy.}
+\cs{As shown in Table~\ref{tab:ablation_center_selection}, disabling adaptive center selection activates all candidate centers and slightly reduces the mean fitting error from 0.0944 m to 0.0939 m. However, the RBF computation time increases from 16.88 ms to 19.03 ms. Thus, the proposed center selection mainly improves online efficiency while maintaining comparable terrain approximation accuracy.}
 
 \cs{Finally, we evaluate the contribution of GPU acceleration to the online RBF terrain approximation. The GPU version uses the CUDA-based implementation for kernel-matrix construction, weight solving, and terrain-height evaluation, while the CPU version performs the same operations on the CPU.}
 
@@ -1018,14 +1005,14 @@ CPU & 0.1161 / 0.4057 & 98.67 ms & 4339.21 ms & 69.04 ms & 4506.92 ms \\
 \renewcommand{\arraystretch}{1.0}
 \end{table}
 
-\cs{As shown in Table~\ref{tab:ablation_gpu_acceleration}, the GPU and CPU implementations achieve comparable terrain approximation accuracy. In terms of runtime, the GPU implementation significantly reduces the computational cost of all RBF-related operations. The kernel-matrix construction time decreases from 98.67 ms to 2.08 ms, the weight-solving time decreases from 4339.21 ms to 15.53 ms, and the total RBF computation time decreases from 4506.92 ms to 22.17 ms. This result demonstrates that GPU acceleration is essential for maintaining online terrain reconstruction in the proposed RBF-LIO framework.}
+\cs{As shown in Table~\ref{tab:ablation_gpu_acceleration}, the GPU and CPU implementations achieve comparable approximation accuracy. However, GPU acceleration reduces the total RBF computation time from 4506.92 ms to 22.17 ms, making online terrain reconstruction feasible.}
 
 \subsection{Robustness to Degraded Terrain Observations}
 \label{subsec:terrain_observation_stress}
 
 \cs{To examine whether the RBF terrain representation relies heavily on dense ground observations from the inverted LiDAR, we conduct a controlled stress test on the Rose Garden sequence. Before RBF fitting, the terrain point cloud is degraded in four settings: full observations, random sparsification with 50\% and 25\% retained points, and sector occlusion by removing points within a forward-facing $60^{\circ}$ angular sector. The RBF model is fitted using the degraded observations, while the validation error is computed on the original full terrain point cloud of the same frame.}
 
-\cs{As shown in Table~\ref{tab:terrain_observation_stress}, all settings maintain a valid-frame ratio of 100\%. Random sparsification reduces the average number of active centers from 744.6 to 691.2 and 616.9, confirming that the terrain support is effectively reduced. Nevertheless, the full-cloud validation errors remain close to the full-observation setting. The sector-occlusion setting shows a similar trend. These results indicate that the RBF terrain approximation remains stable under moderate sparsification and partial field-of-view reduction, as long as sufficient local terrain support is available.}
+\cs{As shown in Table~\ref{tab:terrain_observation_stress}, all settings maintain a valid-frame ratio of 100\%. Although sparsification reduces the average number of active centers, the full-cloud validation errors remain close to the full-observation setting. This indicates that the RBF terrain approximation remains stable under moderate sparsification and partial field-of-view reduction, provided that sufficient local terrain support is available.}
 
 \begin{table}[!t]
 \centering
@@ -1093,33 +1080,31 @@ RBF-LIO (ours) & Yes & Yes & Yes & Wheel--terrain contact geometry & Online RBF 
 
 \begin{figure*}[!htpb]
     \centering
-    \includegraphics[width=0.9\textwidth]{figure/traj/new_stair_drift.png}
+    \includegraphics[width=0.95\textwidth]{figure/traj/new_stair_drift.png}
     \caption{Qualitative comparison of point cloud maps generated in an indoor staircase-only scenario. (a) Reference photograph of the environment. Mapping results produced by (b) RBF-LIO, (c.1) Wheel-Legged SLAM, (c.2) top view of Wheel-Legged SLAM, (d) FAST-LIO2, (e) Leg-KILO, and (f) GLIM. The zoomed-in views highlight the staircase structure reconstructed by each method. The dashed red rectangles indicate the same vertical plane of a single step for visual comparison.}
     \label{fig:stair_drift}
 \end{figure*}
 
-We first examine a staircase-only indoor scenario to highlight the robustness of the compared methods under abrupt elevation changes. As shown in Fig.~\ref{fig:stair_drift}, RBF-LIO produces a structurally consistent point cloud map of the staircase. In contrast, the maps generated by the other methods exhibit varying degrees of ghosting and layering artifacts, suggesting reduced robustness under repeated abrupt elevation changes. This experiment serves as a stress test and directly illustrates the advantage of explicitly incorporating terrain geometry in environments dominated by abrupt height transitions.
+\yzl{We first examine the indoor staircase-only sequence as a stress test for abrupt elevation changes. As shown in Fig.~\ref{fig:stair_drift}, RBF-LIO reconstructs a structurally consistent staircase map. In contrast, the other methods exhibit different degrees of ghosting, layering, or staircase-surface distortion, indicating reduced robustness when repeated height transitions dominate the scene. This result directly illustrates the benefit of explicitly incorporating terrain geometry into the odometry optimization.}
 
-We further qualitatively evaluate the compared methods on our collected datasets.
-The improvements are indeed most visible along the vertical dimension.
+\yzl{We further evaluate the mapping results on the outdoor sequences in Fig.~\ref{fig:garden-results}. The improvements are indeed most visible along the vertical dimension.}
 \begin{figure}[!htbp] 
   \centering
   \includegraphics[width=0.95\linewidth]{figure/traj/drift_new.png}
   \caption{Visualization of the mapping results: (a) RBF-LIO on the Rose Garden dataset, (b) Fast-LIO2 on the Rose Garden dataset, (c) RBF-LIO on a staircase in a feature-rich environment, (d) Wheel-Legged SLAM in the same environment as (c), (e) RBF-LIO on the Botanical Garden dataset, and (f) Leg-KILO on the Botanical Garden dataset.}
   \label{fig:garden-results}
 \end{figure}
-As illustrated in Fig.~\ref{fig:garden-results}, Fast-LIO2 suffers from pose drift and map layering artifacts in Rose Garden, where sparse features and abrupt elevation changes occur simultaneously. Moreover, on the same staircase in Rose Garden, Wheel-Legged SLAM incorrectly fits the plane and fails to map. In addition, in the Botanical Garden dataset, where the terrain is more complex, Leg-KILO suffers from pose drift, which is consistent with the limitation of its coarse terrain model. Although kinematic constraints can improve estimation in feature-sparse environments, the local flatness assumption in Leg-KILO is likely to be violated by uneven structures such as the suspension bridge and the arch bridge, while the reduced geometric richness may further degrade plane extraction. In contrast, RBF-LIO continuously corrects the height estimate through the manifold soft constraints, thereby preserving a more globally consistent map.
+\yzl{In Rose Garden, where sparse features and abrupt height changes occur simultaneously, Fast-LIO2 suffers from map layering, while Wheel-Legged SLAM incorrectly fits the local plane and fails near the staircase region. In Botanical Garden, Leg-KILO shows noticeable drift on complex terrain. These failure cases are consistent with the limitations of scan-matching-only methods and local planar contact models. In contrast, RBF-LIO continuously uses the RBF terrain manifold to regularize the height estimate, resulting in more globally consistent maps.}
 
-Furthermore, we compare the trajectories in Rose Garden. We choose this scenario as a representative one because it contains sparse features together with abrupt height changes. In particular, Fast-LIO2 and Wheel-Legged SLAM both diverge, while the pose estimation error of ROLO-SLAM is too large. Therefore, the trajectories of these three methods are not depicted in Fig.~\ref{fig:traj}. 
+\yzl{Finally, Fig.~\ref{fig:traj} compares the trajectories on Rose Garden. This sequence is selected because it contains sparse features, grass slopes, and short staircases. Fast-LIO2 and Wheel-Legged SLAM diverge, while ROLO-SLAM produces a large pose error; therefore, these three trajectories are not shown. Leg-KILO and GLIM still exhibit z-axis drift, whereas RBF-LIO remains closest to the RTK reference.}
 \begin{figure}[!htpb]
     \centering
     \includegraphics[width=0.9\linewidth]{figure/traj/new_garden_xy_plus_z.png}
     \caption{Trajectories of different methods on the Rose Garden dataset: projection on the \(xoy\)-plane and evolution along the \(z\)-axis.}
     \label{fig:traj}
 \end{figure}
-As shown in Fig.~\ref{fig:traj}, Leg-KILO and GLIM exhibit noticeable z-axis drift, whereas RBF-LIO maintains the closest alignment with the RTK reference.
 
-Next, we quantitatively compare the performance of RBF-LIO with the baselines. In particular, we report the Absolute Trajectory Error (ATE) and Relative Trajectory Error (RTE) of all methods in Table.~\ref{tab:ape} and Table.~\ref{tab:rpe}. In addition to the overall trajectory errors, we also report the errors of the $z$ component in parentheses to directly evaluate the effect of the proposed manifold soft constraints on vertical localization. The best results are highlighted in bold font.
+\yzl{Next, we quantitatively compare RBF-LIO with the baselines using Absolute Trajectory Error (ATE) and Relative Trajectory Error (RTE), as reported in Tables~\ref{tab:ape} and~\ref{tab:rpe}. The values in parentheses denote the corresponding z-axis errors, which directly reflect the effect of the proposed manifold constraint on vertical localization. The best results are highlighted in bold.}
 
 
 \begin{table*}[!htpb]
@@ -1260,28 +1245,27 @@ Botanical Garden
 \end{table*}
 
 
-Both GLIM and RBF-LIO succeed in estimating the poses on all datasets.
-In scenarios with rich geometric features but abrupt height changes, such as Artificial Hill and Staircase Scene 1 \& 2, the ATE of RBF-LIO is generally comparable to that of the strongest competing methods. This suggests that, in feature-rich environments, the baselines can maintain comparable overall trajectory accuracy. However, as the terrain becomes more complex, the difference between the methods becomes more evident. Moreover, RBF-LIO also outperforms ROLO-SLAM, which is explicitly designed to reduce vertical errors.
+\yzl{Both GLIM and RBF-LIO successfully estimate poses on all evaluated sequences. On feature-rich sequences with abrupt height changes, such as Staircase Scene 1, Staircase Scene 2, and Artificial Hill, RBF-LIO achieves overall ATE values comparable to the strongest baselines while maintaining lower or competitive z-axis errors. On more challenging sequences such as Rose Garden and Botanical Garden, the advantage of RBF-LIO becomes more evident, especially in suppressing accumulated vertical drift. RBF-LIO also outperforms ROLO-SLAM, which is explicitly designed to reduce vertical errors.}
 
-Notably, the improvement in RTE is less pronounced than that in ATE. This is consistent with the different roles of the two metrics: RTE evaluates short-horizon local consistency over a fixed interval, whereas ATE reflects the accumulated global drift over the entire trajectory. Since the proposed manifold constraints mainly take effect when the robot traverses abrupt elevation transitions such as stairs, their benefit is diluted in trajectory-wide RTE statistics that average over many locally easy segments. In contrast, the suppression of vertical drift accumulates over time and is therefore more clearly reflected in ATE, especially in the $z$-axis error.
+\yzl{The improvement in RTE is less pronounced than that in ATE because RTE measures short-horizon local consistency, whereas ATE reflects accumulated trajectory-wide drift. Since the proposed manifold constraint mainly takes effect during height transitions, its benefit is more clearly reflected in ATE and z-ATE. Overall, the qualitative and quantitative results show that RBF-LIO improves robustness under abrupt elevation changes while remaining competitive on normal terrain.}
 
 To summarize, both the quantitative and qualitative results show that the proposed RBF-LIO offers a more robust performance in scenarios that have abrupt elevation changes than the baselines. In particular, the advantage of RBF-LIO is most evident in its suppression of accumulated vertical drift and its ability to preserve global consistency in challenging terrain, yet still performs comparably well on normal terrain.
 
 \subsection{Wet-Grass Stress Test}
 \label{subsec:wet_grass_stress}
 
-\cs{To evaluate the behavior of RBF-LIO under slippery-surface and contact-uncertain conditions, we collect an additional wet-grass sequence after rain using the same sensor configuration as the other outdoor sequences. We compare the full RBF-LIO with Fast-LIO2, GLIM, and RBF-LIO without the terrain manifold constraint.}
+\cs{To evaluate RBF-LIO under slippery-surface and contact-uncertain conditions, we collect an additional wet-grass sequence after rain and compare the full method with Fast-LIO2, GLIM, and RBF-LIO without the terrain manifold constraint.}
 
-\begin{figure}[!htpb]
-    \centering
-    \includegraphics[width=0.9\linewidth]{figure/map_env/wet_grass.png}
-    \caption{Wet-grass scenario.}
-    \label{fig:traj}
-\end{figure}
+% \begin{figure}[!htpb]
+%     \centering
+%     \includegraphics[width=0.9\linewidth]{figure/map_env/wet_grass.png}
+%     \caption{Wet-grass scenario.}
+%     \label{fig:traj}
+% \end{figure}
 
 \cs{As shown in Table~\ref{tab:wet_grass_stress}, all methods complete the sequence without divergence. RBF-LIO achieves the lowest ATE and z-ATE. Compared with the ablated version without the terrain manifold constraint, the full method reduces the z-ATE from 0.1850 m to 0.1442 m, corresponding to a relative reduction of about 22.1\%. The RTE values of the full and ablated variants are close, indicating that the manifold constraint improves vertical consistency without degrading short-term odometry stability.}
 
-\cs{This stress test also illustrates the limitation of contact-based terrain constraints. On slippery or deformable surfaces, wheel--terrain contact may become unreliable. Therefore, the manifold term is used as a soft residual rather than a hard constraint. When large manifold residuals, insufficient terrain support, abnormal RBF fitting errors, or sudden IMU changes are detected, the constraint can be down-weighted or disabled, allowing the estimator to fall back to LiDAR--IMU scan matching.}
+\cs{This stress test also shows that contact-based constraints should be treated as soft residuals on slippery or deformable surfaces. When large manifold residuals, insufficient terrain support, abnormal RBF fitting errors, or sudden IMU changes are detected, the constraint can be down-weighted or disabled, allowing the estimator to fall back to LiDAR--IMU scan matching.}
 
 \begin{table}[!t]
 \centering
@@ -1317,27 +1301,46 @@ RBF-LIO & 0.7023 & 0.1442 & 0.055 \\
 
 \cs{Since the M20 platform differs from Tron1 in morphology, LiDAR mounting, ground-observation density, and wheel--terrain contact geometry, a complete transfer of the full manifold constraint requires platform-specific kinematic parameters and contact-reliability checks. More generally, the proposed manifold constraint assumes reliable wheel--terrain contact, sufficient local terrain support, and a terrain surface that can be locally represented as a single-valued height function. These assumptions may be weakened near sharp stair edges, highly deformable grass, severe wheel slip, temporary loss of contact, strong vibration, or multi-layer structures. In such cases, the manifold residual should be down-weighted or rejected, allowing the estimator to rely on the LiDAR--IMU scan-matching objective.}
 
-\begin{figure*}[!t]
+% \begin{figure*}[!t]
+% \centering
+% \begin{minipage}{0.31\textwidth}
+% \centering
+% \includegraphics[width=\linewidth]{figure/robot_setting/m20.png}\\
+% \footnotesize (a) Robot platform
+% \end{minipage}
+% \hfill
+% \begin{minipage}{0.68\textwidth}
+% \centering
+% \includegraphics[width=\linewidth]{figure/traj/m20_stair_drift3.png}\\
+% \footnotesize (b) Side and zoomed-in views. The mapping results are produced by (a) RBF-LIO, (b) Leg-KILO, and (c) Wheel-Legged SLAM, respectively.
+% \end{minipage}
+% \caption{\cs{Qualitative cross-platform staircase stress test on the M20 four-wheel-legged robot. The LiDAR is mounted in a front-facing configuration, which provides less favorable ground observations than the inverted Mid360 setup used on the Tron1 platform. In the zoomed-in comparison, RBF-LIO preserves a clearer staircase structure, Leg-KILO produces a blurred and thick map, and Wheel-Legged SLAM suffers from severe drift.}}
+% \label{fig:m20_staircase_map}
+% \end{figure*}
+
+\begin{figure}[!t]
 \centering
-\begin{minipage}{0.31\textwidth}
+\begin{minipage}{0.95\linewidth}
 \centering
-\includegraphics[width=\linewidth]{figure/robot_setting/m20.png}\\
+\includegraphics[width=0.75\linewidth]{figure/robot_setting/m20.png}\\
 \footnotesize (a) Robot platform
 \end{minipage}
-\hfill
-\begin{minipage}{0.68\textwidth}
+
+\vspace{1mm}
+
+\begin{minipage}{0.95\linewidth}
 \centering
 \includegraphics[width=\linewidth]{figure/traj/m20_stair_drift3.png}\\
-\footnotesize (b) Side and zoomed-in views. The mapping results are produced by (a) RBF-LIO, (b) Leg-KILO, and (c) Wheel-Legged SLAM, respectively.
+\footnotesize (b) Side and zoomed-in mapping results. The zoomed-in maps are produced by (a) RBF-LIO, (b) Leg-KILO, and (c) Wheel-Legged SLAM. 
 \end{minipage}
-\caption{\cs{Qualitative cross-platform staircase stress test on the M20 four-wheel-legged robot. The LiDAR is mounted in a front-facing configuration, which provides less favorable ground observations than the inverted Mid360 setup used on the Tron1 platform. In the zoomed-in comparison, RBF-LIO preserves a clearer staircase structure, Leg-KILO produces a blurred and thick map, and Wheel-Legged SLAM suffers from severe drift.}}
+
+\caption{\cs{Qualitative cross-platform staircase stress test on the M20 four-wheel-legged robot. The front-facing LiDAR provides less favorable ground observations than the inverted Mid360 setup used on the Tron1 platform. In the zoomed-in comparison, RBF-LIO preserves a clearer staircase structure, Leg-KILO produces a blurred and thick map, and Wheel-Legged SLAM suffers from severe drift.}}
 \label{fig:m20_staircase_map}
-\end{figure*}
+\end{figure}
 
 \section{Conclusion}
-In this paper, we proposed RBF-LIO, a LiDAR--inertial odometry framework that incorporates terrain constraints to improve vertical localization accuracy. In particular, the terrain is approximated by radial basis functions (RBFs) based on moment conditions, and the resulting estimation problem is further reformulated as a recursive ridge regression problem. This yields a smooth terrain manifold, which is then introduced into the gradient-based LIO optimization as a set of soft constraints to mitigate localization errors along the $z$-axis.
-Experimental results demonstrate that the proposed method significantly suppresses $z$-axis pose drift in environments with large height differences and abrupt elevation changes, compared with state-of-the-art methods. As a result, the introduced soft constraints enable continuous height correction in the LIO framework, thereby producing coherent and high-fidelity maps even in staircase scenarios and feature-sparse environments.
-Moreover, we release a dataset to support future SLAM research on legged-wheel robots.
+\yzl{This paper presented RBF-LIO, a terrain-aware LiDAR--inertial odometry framework for legged-wheel robots. The method reconstructs an online RBF terrain manifold from LiDAR observations and incorporates it into scan matching as a soft wheel--terrain constraint. Adaptive center selection and GPU acceleration support online terrain approximation. Experiments on staircases, slopes, gardens, degraded terrain observations, wet grass, and an additional M20 staircase sequence show that RBF-LIO suppresses z-axis drift and maintains stable mapping under challenging terrain conditions. Future work will focus on stronger contact-reliability estimation and quantitative cross-platform validation with platform-specific kinematic models.
+Moreover, we release a dataset to support future SLAM research on legged-wheel robots.}
 
 % References
 

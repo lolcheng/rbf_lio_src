@@ -1246,24 +1246,45 @@ public:
     void updateRbfLmConstraints()
     {
         rbfLmConstraints.clear();
+        auto logSkip = [&](const char* reason) {
+            ROS_WARN_THROTTLE(1.0, "[lio_sam][rbf-lm][skip] %s", reason);
+        };
         if (!enableRbfConstraint || !rbfGradientInterface)
+        {
+            logSkip("rbf disabled or gradient interface missing");
             return;
+        }
 
         lio_sam_rbf::RbfCudaRequest request;
         request.pose = {transformTobeMapped[0], transformTobeMapped[1], transformTobeMapped[2],
                         transformTobeMapped[3], transformTobeMapped[4], transformTobeMapped[5]};
         request.sigma_x = static_cast<float>(rbfSigmaX);
         request.sigma_y = static_cast<float>(rbfSigmaY);
+        request.wheel_radius = static_cast<float>(wheelRadius);
+        request.weight_r1 = static_cast<float>(rbfWeightR1);
+        request.weight_r2 = static_cast<float>(rbfWeightR2);
+        request.weight_r3 = static_cast<float>(rbfWeightR3);
+        request.weight_r4 = static_cast<float>(rbfWeightR4);
+        request.max_abs_r1 = static_cast<float>(rbfMaxAbsR1);
+        request.max_abs_r2 = static_cast<float>(rbfMaxAbsR2);
+        request.max_abs_r3 = static_cast<float>(rbfMaxAbsR3);
+        request.max_norm_r4 = static_cast<float>(rbfMaxNormR4);
 
         const int maxPoints = std::max(0, rbfConstraintMaxPoints);
         if (maxPoints == 0)
+        {
+            logSkip("rbfConstraintMaxPoints == 0");
             return;
+        }
 
         int surfCount = laserCloudSurfLastDS ? static_cast<int>(laserCloudSurfLastDS->size()) : 0;
         int cornerCount = laserCloudCornerLastDS ? static_cast<int>(laserCloudCornerLastDS->size()) : 0;
         int totalCount = surfCount + cornerCount;
         if (totalCount == 0)
+        {
+            logSkip("current frame has no corner/surf points");
             return;
+        }
 
         const int takeCount = std::min(maxPoints, totalCount);
         request.points_lidar.reserve(takeCount);
@@ -1281,15 +1302,24 @@ public:
         }
 
         if (request.points_lidar.empty())
+        {
+            logSkip("request.points_lidar is empty after sampling");
             return;
+        }
 
         const int maxNodes = std::max(0, rbfNodeMaxNum);
         if (maxNodes <= 0)
+        {
+            logSkip("rbfNodeMaxNum <= 0");
             return;
+        }
 
         int surfMapCount = laserCloudSurfFromMapDS ? static_cast<int>(laserCloudSurfFromMapDS->size()) : 0;
         if (surfMapCount == 0)
+        {
+            logSkip("map surf cloud empty, no rbf nodes");
             return;
+        }
 
         const int takeNodeCount = std::min(maxNodes, surfMapCount);
         request.rbf_nodes.reserve(takeNodeCount);
@@ -1300,10 +1330,15 @@ public:
         }
 
         if (request.rbf_nodes.empty())
+        {
+            logSkip("request.rbf_nodes empty after node sampling");
             return;
+        }
 
         if (!rbfGradientInterface->computeGradient(request, rbfLmConstraints))
         {
+            ROS_WARN_THROTTLE(1.0,
+                "[lio_sam][rbf-lm][skip] computeGradient failed. Check /joint_states and rbfMaxAbsR1/R2/R3, rbfMaxNormR4.");
             rbfLmConstraints.clear();
             return;
         }
@@ -1317,6 +1352,11 @@ public:
         {
             double sum = 0.0;
             double sumAbs = 0.0;
+            double sumR1 = 0.0;
+            double sumR2 = 0.0;
+            double sumR3 = 0.0;
+            double sumR4 = 0.0;
+            int wheelCount = 0;
             for (const auto& c : rbfLmConstraints)
             {
                 sum += static_cast<double>(c.residual);
@@ -1327,6 +1367,31 @@ public:
             const double meanAbs = sumAbs / static_cast<double>(rbfLmConstraints.size());
             lastRbfResidualMean = mean;
             lastRbfResidualMeanAbs = meanAbs;
+
+            // Residual layout per wheel: [r1, r2, r3, r4x, r4y, r4z]
+            if (rbfLmConstraints.size() % 6 == 0)
+            {
+                wheelCount = static_cast<int>(rbfLmConstraints.size() / 6);
+                for (int i = 0; i < wheelCount; ++i)
+                {
+                    const int b = i * 6;
+                    const double r1 = static_cast<double>(rbfLmConstraints[b + 0].residual);
+                    const double r2 = static_cast<double>(rbfLmConstraints[b + 1].residual);
+                    const double r3 = static_cast<double>(rbfLmConstraints[b + 2].residual);
+                    const double r4x = static_cast<double>(rbfLmConstraints[b + 3].residual);
+                    const double r4y = static_cast<double>(rbfLmConstraints[b + 4].residual);
+                    const double r4z = static_cast<double>(rbfLmConstraints[b + 5].residual);
+                    sumR1 += std::abs(r1);
+                    sumR2 += std::abs(r2);
+                    sumR3 += std::abs(r3);
+                    sumR4 += std::sqrt(r4x * r4x + r4y * r4y + r4z * r4z);
+                }
+            }
+
+            const double meanR1 = (wheelCount > 0) ? (sumR1 / static_cast<double>(wheelCount)) : 0.0;
+            const double meanR2 = (wheelCount > 0) ? (sumR2 / static_cast<double>(wheelCount)) : 0.0;
+            const double meanR3 = (wheelCount > 0) ? (sumR3 / static_cast<double>(wheelCount)) : 0.0;
+            const double meanR4 = (wheelCount > 0) ? (sumR4 / static_cast<double>(wheelCount)) : 0.0;
 
             if (!residualEmaInitialized)
             {
@@ -1351,12 +1416,17 @@ public:
             if ((now - lastResidualPubTime).toSec() > 0.05)
             {
                 std_msgs::Float64MultiArray stats;
+                // [mean, mean_abs, ema, lidar_z_offset, constraint_count, mean_r1, mean_r2, mean_r3, mean_r4]
                 stats.data = {
                     mean,
                     meanAbs,
                     residualEma,
                     lidarZOffsetAdaptive,
-                    static_cast<double>(rbfLmConstraints.size())
+                    static_cast<double>(rbfLmConstraints.size()),
+                    meanR1,
+                    meanR2,
+                    meanR3,
+                    meanR4
                 };
                 pubRbfResidualStats.publish(stats);
 

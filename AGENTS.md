@@ -4,7 +4,7 @@
 
 本文件适用于整个仓库。
 
-以仓库中当前提交的代码作为首要事实来源。`RBF_LIO.pdf` 用于理解预期的算法、术语、残差定义和实验设置，但不得假定论文中的所有功能均已实现。
+以仓库中当前提交的代码作为首要事实来源。`support/RBF_LIO.pdf` 用于理解预期的算法、术语、残差定义和实验设置，但不得假定论文中的所有功能均已实现。
 当论文与代码不一致时，应记录差异，并保持当前代码行为，除非任务明确要求弥合该差异。
 
 当前主要实现位于 `LIO-SAM-MID360`。将 `rbf_cuda/src/lio_sam` 视为旧版或实验性 LIO-SAM 分支，不要自动在两个目录中重复同一项修改。
@@ -28,13 +28,22 @@ RBF-LIO 是一个面向轮腿机器人非平整地形运动的 ROS 1 激光雷�
 
 - `LIO-SAM-MID360`（ROS 包名 `lio_sam`）：主要运行包和当前事实来源。包含 MID360 预处理、特征提取、IMU 预积分、地图优化、回环检测、车轮运动学以及RBF/接触约束注入。
 - `rbf_cuda`（ROS 包名 `cuda_rbf`）：包含 CUDA RBF 拟合库、独立高程节点、诊断程序，以及一套旧版 LIO-SAM 处理链。
-- `robot-description`（ROS 包名 `robot_description`）：包含 Tron1A URDF、
-  Xacro 和网格资源，用于机器人状态可视化和运动学参考。
-- `RBF_LIO.pdf`：只读论文参考资料。
+- `robot-description`（ROS 包名 `robot_description`）：当前保留 M20 URDF 和网格
+  资源，用于 M20 迁移时的机器人模型与运动学事实来源。原 Tron1A 模型文件已被
+  删除，但现有 launch/CMake 尚未全部适配这一变化。
+- `support/RBF_LIO.pdf`：只读论文参考资料。
+- `support/m20_udp_bridge.zip`：测试用 M20 UDP/ROS 1 桥接代码快照；当前
+  `JOINTS_DATA` 的约 500 Hz 发布由约 10 Hz 源数据重复产生，不能视为最终接口。
+- `support/rslidar_ros2_ws`：RoboSense Airy ROS 2 参考工作区。`rslidar_msg` 和
+  `rslidar_sdk` 以官方 Git submodule 固定版本，M20 配置及本地构建差异保存在
+  submodule 外；克隆后需执行 `git submodule update --init --recursive`。
+- `support/rslidar_start.sh`：现有参考脚本。它 source ROS 2 工作区却调用 ROS 1
+  `roslaunch`，与已确认的 `ros2 launch rslidar_sdk start.py` 不一致，不得作为
+  已验证启动命令。
 
 ### 主要运行节点
 
-`LIO-SAM-MID360/launch/run_tron1a_all.launch` 是首选的综合入口，其 LIO 核心
+`LIO-SAM-MID360/launch/run_tron1a_all.launch` 是历史综合入口；其 LIO 核心
 由以下节点组成：
 
 1. `lio_sam_imageProjection`
@@ -92,6 +101,29 @@ mapOptimization 残差 -> 自适应 LiDAR z 偏移 -> imageProjection
 局部地图 + 建图里程计 -> elevation_rbf -> 仅用于 RBF 可视化
 ```
 
+### M20/Airy 迁移边界
+
+当前主代码尚未完成 M20/Airy 适配。第一阶段迁移只使用前置 Airy 点云、前置
+Airy IMU 和机体关节数据；后置 Airy 点云及两台雷达之外的其他 IMU 不进入主估计：
+
+- `/rslidar_points_front`：`sensor_msgs/PointCloud2`，96 个 ring，点字段包含
+  `x/y/z/intensity/ring/timestamp`；点 `timestamp` 为绝对时间，扫描头时间对应首点。
+- `/rslidar_imu_data_front`：`sensor_msgs/Imu`，约 200 Hz；实测 orientation 未填充，
+  加速度量级约为 `1 g`。
+- `/JOINTS_DATA`：测试包中约 500 Hz 发布，但有效源样本约 10 Hz 且大量重复；最终
+  版本要求由 GOS 直接提供真实 500 Hz 数据。
+
+M20 运动学、关节方向、零位、限位和轮尺寸以
+`robot-description/M20/urdf/M20.urdf` 为准。当前测试 bag 的若干关节值超出 URDF
+限位，因此只能验证消息接口，不能验证轮地接触几何。
+
+Airy 驱动配置和启动日志已经确认双雷达端口、话题、时间戳选项及驱动侧变换参数，
+但没有提供前置 Airy 单机 DIFOP 中的 LiDAR-IMU 内部旋转/平移标定。驱动侧前雷达
+变换 `[0.0501, 0, 0.739]`、pitch `+pi/2` 也与 M20 URDF 的前雷达安装位姿
+`[0.32028, 0, -0.013]`、零 RPY 不一致。修改主链前必须明确点云在哪一层完成坐标
+变换，避免驱动和 RBF-LIO 重复变换；IMU 与点云必须最终落在一致且有据可查的坐标
+约定中。
+
 ## 编译方法
 
 ### 支持环境
@@ -137,13 +169,17 @@ source devel/setup.bash
 `cuda_rbf` 在配置和编译时必须存在 CUDA。`lio_sam` 在 CMake 中将 CUDA 视为
 可选依赖，但当前车轮接触残差仍在 CPU 上运行，即使辅助 CUDA 库已成功构建。
 
+当前 `robot-description/CMakeLists.txt` 仍安装已删除的 `pointfoot/wheellegged`
+目录，尚未安装 `M20`。因此上述三包命令只记录预期工作区结构，不得声称当前检出
+已经能够完整构建；M20 描述包适配属于后续迁移修改。
+
 除非已经在受支持的 Linux/ROS 环境中实际完成编译，否则不要声称构建成功。
 构建产物应放在外部工作区，或标准的 `build`、`devel`、`install`、`log`
 目录中。
 
 ## 运行方法
 
-Tron1A 综合启动命令如下：
+历史 Tron1A 综合启动命令如下：
 
 ```bash
 source ~/rbf_lio_ws/devel/setup.bash
@@ -154,6 +190,10 @@ roslaunch lio_sam run_tron1a_all.launch \
   tum_trajectory_path:=/absolute/output/trajectory_tum.txt \
   rbf_file_path:=/absolute/output/rbf_stats
 ```
+
+当前 `robot-description` 中的 Tron1A 模型已被删除，而该 launch 仍引用相应模型，
+因此不得将上述命令描述为当前检出的可用 M20 启动方式。M20 launch 和参数文件尚未
+接入主代码，状态为 **TODO**。
 
 运行前应检查 `LIO-SAM-MID360/config/paramsLivoxIMU.yaml` 中的话题配置。仓库
 中的默认值对应一个特定 MID360 地址，通常不会自动匹配其他设备或 rosbag。
@@ -213,7 +253,8 @@ roslaunch lio_sam run_tron1a_all.launch \
 
 除非用户明确要求修改相关位置，否则：
 
-- 不要修改 `RBF_LIO.pdf`。
+- 不要修改 `support/RBF_LIO.pdf`、`support/m20_udp_bridge.zip` 或
+  `support/rslidar_ros2_ws` 中的供应商/参考代码，除非任务明确要求维护这些材料。
 - 不要修改 `robot-description/**/meshes` 下的二进制资源。
 - 不要手工修改 `build`、`devel` 或 `install` 中生成的 Catkin 消息和服务
   文件；应修改源 `.msg` 或 `.srv`。
@@ -264,7 +305,10 @@ roslaunch lio_sam run_tron1a_all.launch \
 - 重新发布消息时应保持时间戳同步和正确的 frame ID。
 - 新增或重命名参数时，应在同一修改中更新参数声明、加载代码、相关 YAML、launch
   文件和文档。
-- 修改关节运动学时，应同时核对 Tron1A URDF、具名关节处理和通用关节顺序处理。
+- 修改关节运动学时，应以 `robot-description/M20/urdf/M20.urdf` 核对关节顺序、
+  轴向、零位、限位和轮半径；不得直接假定测试桥接包中的 APDU 数值已经符合 URDF。
+- M20 最终关节输入按 GOS 直接提供的真实 500 Hz `JOINTS_DATA` 设计；当前
+  `m20_udp_bridge.zip` 的约 10 Hz 数据重复方案只能作为临时测试后备。
 
 ### 验证要求
 
@@ -277,4 +321,3 @@ roslaunch lio_sam run_tron1a_all.launch \
 5. RBF 约束确实被使用，而不是被跳过。
 6. LM 增量、IMU 偏置估计、RBF 残差统计和 LiDAR z 偏移均为有限值。
 7. 分别在启用和禁用 RBF 约束时检查轨迹与地图表现。
-

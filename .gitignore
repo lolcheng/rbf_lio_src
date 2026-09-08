@@ -1,0 +1,18 @@
+# Sensor recordings and large runtime data
+/data/
+*.bag
+*.db3
+*.db3-shm
+*.db3-wal
+
+# Catkin/colcon build products
+/build/
+/devel/
+/install/
+/log/
+/support/rslidar_ros2_ws/build/
+/support/rslidar_ros2_ws/install/
+/support/rslidar_ros2_ws/log/
+
+# Runtime recordings created inside the reference ROS 2 workspace
+/support/rslidar_ros2_ws/m20_*/

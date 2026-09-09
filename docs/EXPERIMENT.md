@@ -2,7 +2,7 @@
 
 本文只记录当前仓库中的代码、配置、launch、脚本、README 和 `support/RBF_LIO.pdf` 能够支持的实验流程。命令中的 `<...>` 是必须由复现者提供的占位符；仓库无法确认的内容统一标记为 **UNKNOWN**。
 
-> 事实边界：仓库已有 `data/rosbag/m20_upstairs.bag`，但当前 ROS 1 主代码尚不能直接消费其中的 Airy `PointCloud2` 和 M20 自定义关节消息。仓库能够生成 RBF-LIO 里程计、TUM 轨迹、PCD 地图和独立 RBF 节点的耗时/MAE 日志，但没有 ground truth、ATE、z-ATE、RTE 计算脚本，也没有论文表格或绘图脚本。因此，从现有 M20 bag 到论文指标的链路目前并不完整。
+> 事实边界：仓库已有 `data/rosbag/m20_upstairs.bag`，当前 ROS 1 主代码已增加 Airy `PointCloud2` 和 M20 自定义关节消息适配，但尚未在 Linux/ROS 环境中完成编译和整包回放。仓库能够生成 RBF-LIO 里程计、TUM 轨迹、PCD 地图和独立 RBF 节点的耗时/MAE 日志，但没有 ground truth、ATE、z-ATE、RTE 计算脚本，也没有论文表格或绘图脚本。因此，从现有 M20 bag 到论文指标的链路仍不完整。
 
 # 1. Experimental Pipeline
 
@@ -39,18 +39,19 @@ M20 + 双 RoboSense Airy
   -> 测试 ROS 1 m20_udp_bridge
      -> /JOINTS_DATA
   -> data/rosbag/m20_upstairs.bag
-  -> PointCloud2/四轮运动学适配（TODO）
-  -> RBF-LIO -> trajectory/map（TODO 验证）
+  -> run_m20.launch + paramsM20.yaml
+  -> Airy PointCloud2/IMU + M20 四轮运动学适配
+  -> RBF-LIO -> trajectory/map（TODO：ROS 回放验证）
   -> ground truth/evaluation/figure（UNKNOWN/缺失）
 ```
 
-对应入口为 `LIO-SAM-MID360/launch/run_tron1a_all.launch`。主定位器在 `LIO-SAM-MID360/src/mapOptmization.cpp` 中直接写出 TUM 轨迹；独立 RBF 节点在 `rbf_cuda/src/rbf/elevation_rbf.cpp` 中写出耗时和 MAE。
+M20 对应入口为 `LIO-SAM-MID360/launch/run_m20.launch`，历史 MID360/Tron1A 入口为 `run_tron1a_all.launch`。主定位器在 `LIO-SAM-MID360/src/mapOptmization.cpp` 中直接写出 TUM 轨迹；独立 RBF 节点在 `rbf_cuda/src/rbf/elevation_rbf.cpp` 中写出耗时和 MAE。
 
 ## 1.2 可复现边界
 
 | 阶段 | 仓库状态 | 证据 |
 |---|---|---|
-| 数据读取 | 部分存在 | 有 M20 测试 bag，但消息接口尚未接入主代码 |
+| 数据读取 | 已实现，待运行验证 | M20 测试 bag、`airyCloudHandler()`、`m20_joint_state_adapter.py` |
 | ROS 启动 | 存在 | `LIO-SAM-MID360/launch/*.launch` |
 | RBF-LIO 估计 | 存在 | `LIO-SAM-MID360/src/` |
 | TUM 轨迹 | 存在 | `mapOptmization::saveTUMTrajectoryToFile()` |
@@ -71,7 +72,7 @@ M20 + 双 RoboSense Airy
 | 编译器 | 支持对应 C++ 标准且兼容 ROS/CUDA 的编译器；具体 GCC 版本 **UNKNOWN** | CMake 未锁定版本 |
 | CUDA | 构建 `cuda_rbf` 时必需；`lio_sam` 自身以可选方式查找 CUDA | 两个包的 `CMakeLists.txt` |
 | CUDA 版本 | **UNKNOWN** | 仓库未锁定版本 |
-| ROS C++ 依赖 | `roscpp`、`rospy`、`tf`、`sensor_msgs`、`nav_msgs`、`geometry_msgs`、`visualization_msgs`、`pcl_conversions`、`cv_bridge`、`livox_ros_driver`、消息生成 | `package.xml`、CMake |
+| ROS C++ 依赖 | `roscpp`、`rospy`、`tf`、`sensor_msgs`、`nav_msgs`、`geometry_msgs`、`visualization_msgs`、`pcl_conversions`、`cv_bridge`、消息生成；Livox 包为可选 | `package.xml`、CMake |
 | 外部 C++ 依赖 | PCL、OpenCV、Eigen3、GTSAM、Boost、OpenMP | CMake |
 | CUDA 依赖 | CUDA Toolkit、Thrust、cuBLAS、cuSOLVER | `rbf_cuda/CMakeLists.txt`、`rbf_cuda/src/cuda/` |
 | 独立 RBF 节点 | `nlohmann_json` | `rbf_cuda/CMakeLists.txt` |
@@ -104,11 +105,11 @@ source devel/setup.bash
 
 ## 3.2 构建前置条件
 
-- Livox 消息包必须与 rosbag 中的消息类型匹配。代码可在头文件存在时选择 `livox_ros_driver/CustomMsg.h` 或 `livox_ros_driver2/CustomMsg.h`，但 Catkin 依赖声明为 `livox_ros_driver`；实际选择取决于构建环境，属于 **UNKNOWN**。
+- 运行 Livox 输入时，其消息 MD5 必须与编译期选择的 `livox_ros_driver/CustomMsg.h` 或 `livox_ros_driver2/CustomMsg.h` 一致。M20/Airy 路径不要求安装 Livox 包。
 - 构建完整工作区时 `cuda_rbf` 使用 `find_package(CUDA REQUIRED)`，没有 CUDA 的环境不能按上述命令完整构建。
 - 仓库没有 Dockerfile、rosdep 锁文件或固定依赖版本，精确依赖安装命令为 **UNKNOWN**。
 - 本仓库没有可确认的成功构建日志，因此上述命令是代码结构支持的构建方式，不代表当前机器已经编译通过。
-- `robot-description/CMakeLists.txt` 仍安装已经删除的 `pointfoot/wheellegged` 目录，尚未安装 `M20`；当前检出需要修正后才能把 M20 描述包纳入完整构建。
+- `robot-description/CMakeLists.txt` 已安装 `M20` 目录，不再引用已删除的 Tron1A 模型目录。
 - `support/rslidar_ros2_ws` 通过 Git submodule 固定官方 SDK v1.5.19 和 `rslidar_msg`。克隆后需递归初始化，并应用该目录 README 所述的 M20 配置/构建差异；实际 ROS 2 依赖版本仍为 **UNKNOWN**。
 
 # 4. Dataset Organization
@@ -147,19 +148,41 @@ source devel/setup.bash
 
 ## 4.3 数据格式约束
 
-- README 要求 Livox MID360 以 Livox `CustomMsg` 记录和播放；普通 `PointCloud2` 不是主 `imageProjection` 的订阅类型。
+- Livox 路径要求 `CustomMsg`；M20/Airy 路径要求包含 float32 `x/y/z/intensity`、uint16 `ring`、float64 绝对 `timestamp` 的 `PointCloud2`。
 - README 明确要求 LiDAR 与 IMU 时间戳对齐。允许的时间偏差、硬件同步方案和 rosbag 时间修正方法为 **UNKNOWN**。
 - `imuType: 0` 时，`imuConverter()` 将输入线加速度乘以重力常数，表示该配置期待以 `g` 为单位的 MID360 内置 IMU 加速度；外部 IMU 的单位和外参必须另行核对。
-- 轮地约束需要至少 8 个关节位置。代码识别 Tron1A 具名关节，也接受 `joint_0` 至 `joint_7`；无名称时使用数组顺序。真实数据中的关节顺序为 **UNKNOWN**。
+- Tron1A 轮地约束需要 8 个关节位置；M20 路径需要 12 个腿关节位置，并由适配器发布 16 个 URDF 关节。M20 默认顺序和名称在 `m20_joint_state_adapter.py` 中明确。
 - `gps2tum.py` 期待 `/ublox_driver/receiver_lla` 消息具有 `latitude`、`longitude`、`altitude` 字段，但脚本没有声明其具体 ROS 消息类型，故类型为 **UNKNOWN**。
 
 # 5. Running the Baseline
 
 本节中的“标准 RBF-LIO”指当前主实现 `LIO-SAM-MID360`，不是 `rbf_cuda/src/lio_sam` 的旧版/实验性分支。
 
-当前 `run_tron1a_all.launch` 仍引用已经删除的 Tron1A 模型，而主点云入口仍只接受 Livox `CustomMsg`。所以下述命令记录的是历史主入口，不是当前检出中可直接用于 M20 的可运行基线。M20 baseline launch 为 **TODO**。
+`run_tron1a_all.launch` 是历史 Tron1A 入口。M20/Airy 基线由 `run_m20.launch` 与 `paramsM20.yaml` 定义，但尚无本仓库可引用的成功 ROS 回放日志。
 
-## 5.1 历史主入口
+## 5.1 M20 接口回放基线
+
+```bash
+mkdir -p /absolute/output
+source ~/rbf_lio_ws/devel/setup.bash
+roslaunch lio_sam run_m20.launch \
+  use_sim_time:=true \
+  with_rviz:=true \
+  with_robot_tf:=true \
+  with_rbf_visualization:=false \
+  enable_rbf_constraint:=false \
+  tum_trajectory_path:=/absolute/output/m20_upstairs_tum.txt
+```
+
+另一个终端播放：
+
+```bash
+rosbag play --clock /absolute/path/to/rbf_lio_20260402/data/rosbag/m20_upstairs.bag
+```
+
+命令来源：`LIO-SAM-MID360/launch/run_m20.launch` 和 `config/paramsM20.yaml`。`--clock` 与 `use_sim_time` 用于按 bag 时间运行；测试 bag 不含 ground truth，不能由该命令计算 ATE/RTE。
+
+## 5.2 历史主入口
 
 先创建输出目录，因为 `mapOptmization` 不会创建 TUM 文件的父目录：
 
@@ -183,20 +206,20 @@ roslaunch lio_sam run_tron1a_all.launch \
 
 配置 `LIO-SAM-MID360/config/paramsLivoxIMU.yaml` 中 `enableRbfConstraint: true`，因此该入口启用主地图优化中的轮地/RBF 约束。`with_rbf:=true` 只额外启动 `cuda_rbf/launch/run_rbf.launch` 中的独立 `elevation_rbf` 和 `fk.py`，并不控制主优化器的 RBF 约束。
 
-## 5.2 播放 rosbag
+## 5.3 单独检查 rosbag
 
 现有 M20 测试 bag 可用以下 ROS 1 命令检查和播放：
 
 ```bash
 rosbag info /absolute/path/to/rbf_lio_20260402/data/rosbag/m20_upstairs.bag
-rosbag play /absolute/path/to/rbf_lio_20260402/data/rosbag/m20_upstairs.bag
+rosbag play --clock /absolute/path/to/rbf_lio_20260402/data/rosbag/m20_upstairs.bag
 ```
 
-但当前 RBF-LIO 不能直接订阅该 bag 的 `PointCloud2` 或 `M20JointsData`。是否需要 `--clock`、播放速率和起始偏移尚无仓库级实验约定。只有完成消息/运动学适配后，才可把上述播放作为 M20 基线的一部分。
+`lio_sam/M20JointsData` 与 bag 中的 `m20_udp_bridge/M20JointsData` 定义具有相同 ROS 1 MD5 `fb86770770e356b2075846629adc617b`，ROS 1 可按相同序列化布局连接。该兼容性仍需在目标 ROS 环境中实测。
 
 `support/m20_udp_bridge.zip` 内的 `record_bag.sh` 是测试桥录包入口，默认录制 `/IMU`、`/JOINTS_DATA` 和前后点云。该压缩包的重复发布策略不是最终 GOS 500 Hz 方案。
 
-## 5.3 其他现有入口
+## 5.4 其他现有入口
 
 ```bash
 roslaunch lio_sam run6axis.launch \
@@ -213,7 +236,7 @@ roslaunch lio_sam run9axis.launch
 
 `LIO-SAM-MID360/launch/run.launch` 加载通用 `params.yaml`，会启动 navsat，但其中 RBF 约束默认关闭。`rbf_cuda/launch/run.launch` 启动的是旧版 `cuda_rbf` LIO-SAM 处理链，不作为当前基线入口。
 
-## 5.4 保存地图
+## 5.5 保存地图
 
 运行时服务接口来自 `LIO-SAM-MID360/srv/save_map.srv` 和 `mapOptimization::saveMapService()`：
 
@@ -230,7 +253,7 @@ destination: '/rbf_lio_result/map'"
 
 | 变体 | 参数/入口 | 实际作用 | 自动化与结果位置 |
 |---|---|---|---|
-| Full model | `paramsLivoxIMU.yaml`：`enableRbfConstraint: true`；`run_tron1a_all.launch` | 主 LM 中加入轮地/RBF 残差 | 无批处理脚本；TUM 路径由 launch 参数指定 |
+| Full model | M20：`run_m20.launch enable_rbf_constraint:=true`；历史 Tron1A：`paramsLivoxIMU.yaml` + `run_tron1a_all.launch` | 主 LM 中加入轮地/RBF 残差 | M20 必须先换用已验证的关节数据；无批处理脚本 |
 | w/o manifold | 将所加载 YAML 的 `enableRbfConstraint` 设为 `false` | `updateRbfLmConstraints()` 直接跳过约束 | 无专用 YAML、launch 或命令；必须另行维护实验配置，当前仓库不能一条命令复现 |
 | LiDAR z 自适应关闭 | `enableLidarZCalibration: false` | 保留 RBF 残差，但停止残差驱动的 LiDAR z 偏移更新 | 无专用实验入口 |
 | 回环开/关 | `loopClosureEnableFlag` | 控制内置回环线程/因子 | 无参数扫描脚本 |
@@ -242,7 +265,7 @@ destination: '/rbf_lio_result/map'"
 
 ## 6.2 RBF 参数实验的真实接口
 
-主优化器参数位于 `LIO-SAM-MID360/config/paramsLivoxIMU.yaml`：
+主优化器参数位于 `LIO-SAM-MID360/config/paramsM20.yaml`，历史基线的同名参数位于 `paramsLivoxIMU.yaml`：
 
 - `rbfConstraintWeight: 0.35`
 - `rbfConstraintMaxPoints: 2000`
@@ -383,7 +406,7 @@ $HOME<save_map.destination>/          # save_map 服务会删除后重建
 # 11. Known Missing Information
 
 1. **UNKNOWN：论文数据集获取方式。** 仓库只有 M20 接口测试 bag，没有论文数据集下载 URL、许可证、校验和或序列清单。
-2. **TODO：M20 bag 到主估计器。** `m20_upstairs.bag` 的 topics 已确认，但 PointCloud2、每点绝对时间和 M20 四轮关节消息尚未接入主代码。
+2. **TODO：M20 bag 回放验证。** PointCloud2、每点绝对时间和 M20 四轮关节消息已接入主代码，但尚未在 ROS Noetic 环境完成整包运行。
 3. **UNKNOWN：论文序列与本地文件的映射。** Staircase 1/2、Artificial Hill、Rose Garden、Botanical Garden、Indoor Staircase Only、Wet Grass 没有文件名映射。
 4. **UNKNOWN：ground truth 来源与标定。** PDF 提到 RTK reference；仓库未给出 RTK 解算文件、基站信息、天线外参或质量筛选规则。
 5. **UNKNOWN：时间同步与轨迹关联。** 没有传感器时偏、关联阈值和插值方法。

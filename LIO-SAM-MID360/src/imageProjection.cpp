@@ -28,6 +28,19 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (LiovxPointCustomMsg,
     (uint16_t, ring, ring) (uint16_t, tag, tag)
 )
 
+struct RoboSensePointXYZIRT
+{
+    PCL_ADD_POINT4D
+    PCL_ADD_INTENSITY;
+    uint16_t ring;
+    double timestamp;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+} EIGEN_ALIGN16;
+POINT_CLOUD_REGISTER_POINT_STRUCT (RoboSensePointXYZIRT,
+    (float, x, x) (float, y, y) (float, z, z) (float, intensity, intensity)
+    (uint16_t, ring, ring) (double, timestamp, timestamp)
+)
+
 struct OusterPointXYZIRT {
     PCL_ADD_POINT4D;
     float intensity;
@@ -71,8 +84,12 @@ private:
     ros::Subscriber subLidarCalibOffset;
     double lidarZOffsetDynamic = 0.0;
 
-    std::deque<livox_msg::CustomMsg> cloudQueue;
-    livox_msg::CustomMsg currentCloudMsg;
+#if LIO_SAM_HAS_LIVOX
+    std::deque<livox_msg::CustomMsg> livoxCloudQueue;
+    livox_msg::CustomMsg currentLivoxCloudMsg;
+#endif
+    std::deque<sensor_msgs::PointCloud2> airyCloudQueue;
+    sensor_msgs::PointCloud2 currentAiryCloudMsg;
 
     double *imuTime = new double[queueLength];
     double *imuRotX = new double[queueLength];
@@ -84,6 +101,7 @@ private:
     Eigen::Affine3f transStartInverse;
 
     pcl::PointCloud<PointXYZIRT>::Ptr laserCloudIn;
+    pcl::PointCloud<RoboSensePointXYZIRT>::Ptr tmpAiryCloudIn;
     pcl::PointCloud<OusterPointXYZIRT>::Ptr tmpOusterCloudIn;
     pcl::PointCloud<PointType>::Ptr   fullCloud;
     pcl::PointCloud<PointType>::Ptr   extractedCloud;
@@ -110,7 +128,28 @@ public:
     {
         subImu        = nh.subscribe<sensor_msgs::Imu>(imuTopic, 2000, &ImageProjection::imuHandler, this, ros::TransportHints().tcpNoDelay());
         subOdom       = nh.subscribe<nav_msgs::Odometry>(odomTopic+"_incremental", 2000, &ImageProjection::odometryHandler, this, ros::TransportHints().tcpNoDelay());
-        subLaserCloud = nh.subscribe<livox_msg::CustomMsg>(pointCloudTopic, 5, &ImageProjection::cloudHandler, this, ros::TransportHints().tcpNoDelay());
+        if (sensor == SensorType::AIRY)
+        {
+            subLaserCloud = nh.subscribe<sensor_msgs::PointCloud2>(
+                pointCloudTopic, 5, &ImageProjection::airyCloudHandler, this,
+                ros::TransportHints().tcpNoDelay());
+        }
+        else if (sensor == SensorType::LIVOX)
+        {
+#if LIO_SAM_HAS_LIVOX
+            subLaserCloud = nh.subscribe<livox_msg::CustomMsg>(
+                pointCloudTopic, 5, &ImageProjection::livoxCloudHandler, this,
+                ros::TransportHints().tcpNoDelay());
+#else
+            ROS_FATAL("sensor=livox but no Livox ROS1 CustomMsg header was found at build time.");
+            ros::shutdown();
+#endif
+        }
+        else
+        {
+            ROS_FATAL("This imageProjection build accepts only sensor=livox or sensor=airy inputs.");
+            ros::shutdown();
+        }
         subLidarCalibOffset = nh.subscribe<std_msgs::Float64>("lio_sam/lidar_calib/z_offset", 20, &ImageProjection::lidarCalibOffsetHandler, this, ros::TransportHints().tcpNoDelay());
 
         pubExtractedCloud = nh.advertise<sensor_msgs::PointCloud2> ("lio_sam/deskew/cloud_deskewed", 1);
@@ -125,6 +164,7 @@ public:
     void allocateMemory()
     {
         laserCloudIn.reset(new pcl::PointCloud<PointXYZIRT>());
+        tmpAiryCloudIn.reset(new pcl::PointCloud<RoboSensePointXYZIRT>());
         tmpOusterCloudIn.reset(new pcl::PointCloud<OusterPointXYZIRT>());
         fullCloud.reset(new pcl::PointCloud<PointType>());
         extractedCloud.reset(new pcl::PointCloud<PointType>());
@@ -186,7 +226,8 @@ public:
         lidarZOffsetDynamic = msg->data;
     }
 
-    void cloudHandler(const livox_msg::CustomMsgConstPtr& laserCloudMsg)
+#if LIO_SAM_HAS_LIVOX
+    void livoxCloudHandler(const livox_msg::CustomMsgConstPtr& laserCloudMsg)
     {
         if (!cachePointCloud(laserCloudMsg))
             return;
@@ -202,7 +243,23 @@ public:
 
         resetParameters();
     }
+#endif
 
+    void airyCloudHandler(const sensor_msgs::PointCloud2ConstPtr& laserCloudMsg)
+    {
+        if (!cacheAiryPointCloud(laserCloudMsg))
+            return;
+
+        if (!deskewInfo())
+            return;
+
+        projectPointCloud();
+        cloudExtraction();
+        publishClouds();
+        resetParameters();
+    }
+
+#if LIO_SAM_HAS_LIVOX
     void moveFromCustomMsg(livox_msg::CustomMsg &Msg, pcl::PointCloud<PointXYZIRT> & cloud)
     {
         cloud.clear();
@@ -245,16 +302,16 @@ public:
     bool cachePointCloud(const livox_msg::CustomMsgConstPtr& laserCloudMsg)
     {
         // cache point cloud
-        cloudQueue.push_back(*laserCloudMsg);
-        if (cloudQueue.size() <= 2)
+        livoxCloudQueue.push_back(*laserCloudMsg);
+        if (livoxCloudQueue.size() <= 2)
             return false;
 
         // convert cloud
-        currentCloudMsg = std::move(cloudQueue.front());
-        cloudQueue.pop_front();
+        currentLivoxCloudMsg = std::move(livoxCloudQueue.front());
+        livoxCloudQueue.pop_front();
         if (sensor == SensorType::LIVOX)
         {
-            moveFromCustomMsg(currentCloudMsg, *laserCloudIn);
+            moveFromCustomMsg(currentLivoxCloudMsg, *laserCloudIn);
         }
         else
         {
@@ -263,7 +320,9 @@ public:
         }
 
         // get timestamp
-        cloudHeader = currentCloudMsg.header;
+        if (laserCloudIn->empty())
+            return false;
+        cloudHeader = currentLivoxCloudMsg.header;
         timeScanCur = cloudHeader.stamp.toSec();
         timeScanEnd = timeScanCur + laserCloudIn->points.back().time;
 
@@ -274,6 +333,122 @@ public:
             ros::shutdown();
         }
 
+        return true;
+    }
+#endif
+
+    bool hasAiryFields(const sensor_msgs::PointCloud2& msg) const
+    {
+        const std::array<std::pair<std::string, uint8_t>, 6> required = {{
+            {"x", sensor_msgs::PointField::FLOAT32},
+            {"y", sensor_msgs::PointField::FLOAT32},
+            {"z", sensor_msgs::PointField::FLOAT32},
+            {"intensity", sensor_msgs::PointField::FLOAT32},
+            {"ring", sensor_msgs::PointField::UINT16},
+            {"timestamp", sensor_msgs::PointField::FLOAT64}
+        }};
+
+        for (const auto& expected : required)
+        {
+            const auto field = std::find_if(msg.fields.begin(), msg.fields.end(),
+                [&](const sensor_msgs::PointField& candidate) {
+                    return candidate.name == expected.first &&
+                           candidate.datatype == expected.second &&
+                           candidate.count == 1;
+                });
+            if (field == msg.fields.end())
+            {
+                ROS_ERROR_STREAM_THROTTLE(2.0,
+                    "Airy PointCloud2 requires field " << expected.first
+                    << " with datatype=" << static_cast<int>(expected.second));
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool moveFromAiryMsg(
+        const sensor_msgs::PointCloud2& msg,
+        pcl::PointCloud<PointXYZIRT>& cloud)
+    {
+        if (!hasAiryFields(msg))
+            return false;
+
+        tmpAiryCloudIn->clear();
+        pcl::fromROSMsg(msg, *tmpAiryCloudIn);
+        if (tmpAiryCloudIn->empty())
+            return false;
+
+        double lidarZOffsetLocal = 0.0;
+        {
+            std::lock_guard<std::mutex> lock(lidarCalibLock);
+            lidarZOffsetLocal = lidarZOffsetDynamic;
+        }
+
+        const double scanStamp = msg.header.stamp.toSec();
+        cloud.clear();
+        cloud.reserve(tmpAiryCloudIn->size());
+        cloud.header.frame_id = msg.header.frame_id;
+        cloud.header.stamp = msg.header.stamp.toNSec() / 1000;
+        cloud.header.seq = msg.header.seq;
+        cloud.is_dense = true;
+
+        for (const auto& raw : tmpAiryCloudIn->points)
+        {
+            if (!std::isfinite(raw.x) || !std::isfinite(raw.y) ||
+                !std::isfinite(raw.z) || !std::isfinite(raw.timestamp))
+                continue;
+
+            const double relativeTime = raw.timestamp - scanStamp;
+            if (relativeTime < -1e-3 || relativeTime > 1.0)
+            {
+                ROS_WARN_STREAM_THROTTLE(2.0,
+                    "Airy point timestamp is outside scan window: rel=" << relativeTime);
+                continue;
+            }
+
+            Eigen::Vector3d position(raw.x, raw.y, raw.z);
+            if (pointCloudTransformEnable)
+                position = pointCloudRot * position + pointCloudTrans;
+
+            PointXYZIRT point;
+            point.x = static_cast<float>(position.x());
+            point.y = static_cast<float>(position.y());
+            point.z = static_cast<float>(position.z() + lidarZOffsetLocal);
+            point.intensity = raw.intensity;
+            point.ring = raw.ring;
+            point.time = static_cast<float>(std::max(0.0, relativeTime));
+            point.tag = 0;
+            cloud.push_back(point);
+        }
+        return !cloud.empty();
+    }
+
+    bool cacheAiryPointCloud(const sensor_msgs::PointCloud2ConstPtr& laserCloudMsg)
+    {
+        if (!laserCloudMsg)
+            return false;
+
+        airyCloudQueue.push_back(*laserCloudMsg);
+        if (airyCloudQueue.size() <= 2)
+            return false;
+
+        currentAiryCloudMsg = std::move(airyCloudQueue.front());
+        airyCloudQueue.pop_front();
+        if (!moveFromAiryMsg(currentAiryCloudMsg, *laserCloudIn))
+            return false;
+
+        cloudHeader = currentAiryCloudMsg.header;
+        timeScanCur = cloudHeader.stamp.toSec();
+        timeScanEnd = timeScanCur;
+        for (const auto& point : laserCloudIn->points)
+            timeScanEnd = std::max(timeScanEnd, timeScanCur + static_cast<double>(point.time));
+
+        if (timeScanEnd <= timeScanCur)
+        {
+            ROS_WARN_THROTTLE(2.0, "Airy scan has no valid per-point time span.");
+            return false;
+        }
         return true;
     }
 
@@ -545,7 +720,7 @@ public:
                 if (columnIdn >= Horizon_SCAN)
                     columnIdn -= Horizon_SCAN;
             }
-            else if (sensor == SensorType::LIVOX)
+            else if (sensor == SensorType::LIVOX || sensor == SensorType::AIRY)
             {
                 columnIdn = columnIdnCountVec[rowIdn];
                 columnIdnCountVec[rowIdn] += 1;

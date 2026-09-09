@@ -248,4 +248,195 @@ bool JointStateWheelKinematics::computeWheelGeometry(
     }
     return true;
 }
+
+M20JointStateWheelKinematics::M20JointStateWheelKinematics(
+    const std::string& topicName,
+    float wheelRadius)
+    : topicName_(topicName)
+{
+    latestQ_.fill(0.0f);
+    wheelRadius_ = wheelRadius > 0.0f ? wheelRadius : 0.09f;
+    subJointState_ = nh_.subscribe<sensor_msgs::JointState>(
+        topicName_, 1000, &M20JointStateWheelKinematics::jointStateHandler, this,
+        ros::TransportHints().tcpNoDelay());
+    ROS_INFO_STREAM("[lio_sam][rbf] M20 four-wheel kinematics use joint topic: "
+                    << topicName_ << ", wheelRadius=" << wheelRadius_);
+}
+
+void M20JointStateWheelKinematics::jointStateHandler(
+    const sensor_msgs::JointState::ConstPtr& msg)
+{
+    if (!msg || msg->position.size() < 12)
+        return;
+
+    static const std::array<std::string, 12> jointNames = {{
+        "fl_hipx_joint", "fl_hipy_joint", "fl_knee_joint",
+        "fr_hipx_joint", "fr_hipy_joint", "fr_knee_joint",
+        "hl_hipx_joint", "hl_hipy_joint", "hl_knee_joint",
+        "hr_hipx_joint", "hr_hipy_joint", "hr_knee_joint"
+    }};
+    static const std::array<int, 12> fallback16 = {{
+        0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14
+    }};
+    static const std::array<float, 12> lower = {{
+        -0.436f, -2.583f, -2.792f,
+        -0.611f, -2.583f, -2.792f,
+        -0.436f, -2.286f, -2.809f,
+        -0.611f, -2.286f, -2.809f
+    }};
+    static const std::array<float, 12> upper = {{
+        0.611f, 2.286f, 2.809f,
+        0.436f, 2.286f, 2.809f,
+        0.611f, 2.583f, 2.792f,
+        0.436f, 2.583f, 2.792f
+    }};
+
+    std::array<float, 12> q{};
+    for (size_t outIdx = 0; outIdx < jointNames.size(); ++outIdx)
+    {
+        int inputIdx = -1;
+        for (size_t i = 0; i < msg->name.size(); ++i)
+        {
+            if (msg->name[i] == jointNames[outIdx])
+            {
+                inputIdx = static_cast<int>(i);
+                break;
+            }
+        }
+
+        if (inputIdx < 0)
+        {
+            if (msg->position.size() >= 16)
+                inputIdx = fallback16[outIdx];
+            else
+                inputIdx = static_cast<int>(outIdx);
+        }
+
+        if (inputIdx < 0 || inputIdx >= static_cast<int>(msg->position.size()) ||
+            !std::isfinite(msg->position[inputIdx]))
+        {
+            ROS_WARN_THROTTLE(2.0, "[lio_sam][rbf] invalid M20 joint state layout or value.");
+            return;
+        }
+
+        q[outIdx] = static_cast<float>(msg->position[inputIdx]);
+        if (q[outIdx] < lower[outIdx] || q[outIdx] > upper[outIdx])
+        {
+            ROS_WARN_STREAM_THROTTLE(2.0,
+                "[lio_sam][rbf] M20 joint " << jointNames[outIdx]
+                << "=" << q[outIdx] << " is outside URDF limits ["
+                << lower[outIdx] << ", " << upper[outIdx]
+                << "]; using the measured value without clamping.");
+        }
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(mtxJoint_);
+        latestQ_ = q;
+        hasJointState_ = true;
+    }
+}
+
+bool M20JointStateWheelKinematics::getJointVector(std::array<float, 12>& qOut) const
+{
+    std::lock_guard<std::mutex> lock(mtxJoint_);
+    if (!hasJointState_)
+        return false;
+    qOut = latestQ_;
+    return true;
+}
+
+Eigen::Matrix3f M20JointStateWheelKinematics::rotX(float a)
+{
+    const float c = std::cos(a);
+    const float s = std::sin(a);
+    Eigen::Matrix3f rotation;
+    rotation << 1.0f, 0.0f, 0.0f,
+                0.0f, c, -s,
+                0.0f, s, c;
+    return rotation;
+}
+
+Eigen::Matrix3f M20JointStateWheelKinematics::rotY(float a)
+{
+    const float c = std::cos(a);
+    const float s = std::sin(a);
+    Eigen::Matrix3f rotation;
+    rotation << c, 0.0f, s,
+                0.0f, 1.0f, 0.0f,
+                -s, 0.0f, c;
+    return rotation;
+}
+
+Eigen::Vector3f M20JointStateWheelKinematics::computeWheelCenterBase(
+    int leg,
+    const std::array<float, 12>& q) const
+{
+    const bool front = leg < 2;
+    const bool left = (leg % 2) == 0;
+    const int offset = leg * 3;
+
+    const Eigen::Vector3f hipOrigin(
+        front ? 0.3141f : -0.3141f,
+        left ? 0.0685f : -0.0685f,
+        0.0f);
+    const Eigen::Vector3f kneeOrigin(0.0f, left ? 0.0984f : -0.0984f, -0.25f);
+    const Eigen::Vector3f wheelOrigin(0.0f, left ? 0.059676f : -0.059676f, -0.25f);
+
+    Eigen::Matrix3f rotation = rotX(-q[offset]);
+    rotation = rotation * rotY(-q[offset + 1]);
+    Eigen::Vector3f center = hipOrigin + rotation * kneeOrigin;
+    rotation = rotation * rotY(-q[offset + 2]);
+    center += rotation * wheelOrigin;
+    return center;
+}
+
+Eigen::Vector3f M20JointStateWheelKinematics::computeWheelAxisBase(
+    int leg,
+    const std::array<float, 12>& q) const
+{
+    const int offset = leg * 3;
+    Eigen::Matrix3f rotation = rotX(-q[offset]);
+    rotation = rotation * rotY(-q[offset + 1]);
+    rotation = rotation * rotY(-q[offset + 2]);
+    Eigen::Vector3f axis = rotation * Eigen::Vector3f(0.0f, -1.0f, 0.0f);
+    if (axis.norm() > 1e-6f)
+        axis.normalize();
+    else
+        axis = Eigen::Vector3f(0.0f, -1.0f, 0.0f);
+    return axis;
+}
+
+bool M20JointStateWheelKinematics::computeWheelGeometry(
+    const std::array<float, 6>& pose,
+    std::vector<WheelGeometry, Eigen::aligned_allocator<WheelGeometry>>& wheels)
+{
+    wheels.clear();
+
+    std::array<float, 12> q{};
+    if (!getJointVector(q))
+    {
+        ROS_WARN_STREAM_THROTTLE(2.0,
+            "[lio_sam][rbf] waiting " << topicName_ << " for M20 wheel kinematics.");
+        return false;
+    }
+
+    const Eigen::Matrix3f rotationWorld =
+        Eigen::AngleAxisf(pose[2], Eigen::Vector3f::UnitZ()).toRotationMatrix() *
+        Eigen::AngleAxisf(pose[1], Eigen::Vector3f::UnitY()).toRotationMatrix() *
+        Eigen::AngleAxisf(pose[0], Eigen::Vector3f::UnitX()).toRotationMatrix();
+    const Eigen::Vector3f translationWorld(pose[3], pose[4], pose[5]);
+
+    wheels.reserve(4);
+    for (int leg = 0; leg < 4; ++leg)
+    {
+        WheelGeometry wheel;
+        wheel.center_world = translationWorld + rotationWorld * computeWheelCenterBase(leg, q);
+        wheel.axis_world = rotationWorld * computeWheelAxisBase(leg, q);
+        if (wheel.axis_world.norm() > 1e-6f)
+            wheel.axis_world.normalize();
+        wheels.push_back(wheel);
+    }
+    return wheels.size() == 4;
+}
 }

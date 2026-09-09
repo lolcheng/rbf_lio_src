@@ -386,12 +386,12 @@ R_{new}=R-RW^T(WRW^T+Q)^{-1}WR.
 
 | 项目 | 实现 |
 | --- | --- |
-| 参数 | `/joint_states`、`wheelRadius`、硬编码 Tron1A link offsets |
+| 参数 | `jointStateTopic`、`robotKinematicsModel`、`wheelRadius`、对应 URDF 几何常量 |
 | 文件 | `LIO-SAM-MID360/src/rbf_wheel_kinematics.cpp` |
-| 类 | `JointStateWheelKinematics` |
-| 函数 | `computeWheelCenterBase()`、`computeWheelGeometry()` |
-| 输入 | 八关节位置、六维 pose |
-| 输出 | 左右轮 `center_world` |
+| 类 | `JointStateWheelKinematics`、`M20JointStateWheelKinematics` |
+| 函数 | 两类各自的 `computeWheelCenterBase()`、`computeWheelGeometry()` |
+| 输入 | Tron1A 八关节或 M20 十二个腿关节位置、六维 pose |
+| 输出 | Tron1A 左右轮或 M20 四轮的 `center_world` |
 | 调用者 | `CudaWheelRbfGradient::computeGradient()` 间接调用 |
 
 代码只使用腿部 abad/hip/knee 角计算轮心，轮关节自转角不影响轮心。
@@ -404,33 +404,30 @@ R_{new}=R-RW^T(WRW^T+Q)^{-1}WR.
 u_j({}^O R_B;q)={}^O R_B g_j(q).
 \]
 
-代码 `computeWheelAxisBase()` 根据 abad/hip/knee 旋转 wheel joint 的 `[0,1,0]` 轴，再由 `computeWheelGeometry()` 乘以 world rotation。输出归一化 `axis_world`。
-
-该运动学只构造左右两个轮子。论文中的四轮集合没有对应当前代码模型。
+代码 `computeWheelAxisBase()` 根据各自 URDF 的 hip/knee 旋转 wheel joint 轴，再由 `computeWheelGeometry()` 乘以 world rotation，输出归一化 `axis_world`。Tron1A 生成两个轮，M20 生成四个轮。
 
 ### 9.3 M20 四轮迁移边界
 
 主残差接口按 `std::vector<WheelGeometry>` 遍历车轮，因此残差求值和向
-`LMOptimization()` 追加行的代码没有固定写死“两轮行数”。但当前唯一活动的
-`JointStateWheelKinematics` 只生成 Tron1A 左右两轮几何，M20 四轮正运动学尚未实现。
-
-后续可由代码/模型确认的输入约束为：
+`LMOptimization()` 追加行的代码没有固定写死“两轮行数”。`mapOptimization`
+根据 `robotKinematicsModel` 选择历史 Tron1A 类或 M20 四轮类。
 
 | 数学量 | 迁移事实来源 | 当前状态 |
 | --- | --- | --- |
-| 16 个关节的轴、零位、限位与父子 link | `robot-description/M20/urdf/M20.urdf` | 模型已存在，主代码未调用 |
-| 四个轮心和轮轴 | 由上述 URDF 链计算 | **TODO** |
-| 轮半径 `rho` | M20 URDF collision geometry，`0.09 m` | 配置/代码尚未切换 |
-| 关节观测 | `/JOINTS_DATA` | 测试包直接转发 APDU；符号、零偏和顺序映射 **UNKNOWN** |
+| 16 个关节的轴、零位、限位与父子 link | `robot-description/M20/urdf/M20.urdf` | 运动学常量和 TF 模型来源 |
+| 四个轮心和轮轴 | `M20JointStateWheelKinematics::computeWheelGeometry()` | 已生成四个 `WheelGeometry` |
+| 轮半径 `rho` | M20 URDF collision geometry，`0.09 m` | `paramsM20.yaml::wheelRadius` |
+| 关节观测 | `/JOINTS_DATA` -> `m20_joint_state_adapter.py` -> `/joint_states_m20` | 暂按单位比例/零偏转换，比例与零偏均可配置 |
 
 测试 bag 中若干关节值超出 URDF 限位，且约 500 Hz topic 主要由约 10 Hz 源样本
 重复组成。因此该数据只能用于验证解析器和时间队列，不能用于确认论文式 (25)-(28)
 在 M20 上的几何正确性。最终输入应由 GOS 直接提供真实 500 Hz 样本，并在进入
 运动学前转换成 URDF 关节约定。
 
-前 Airy IMU 与 LiDAR 的单机 DIFOP 工厂外参仍未获得。该缺失不改变轮地残差的
-数学形式，但会影响 `transformTobeMapped` 与 `base_link` 的一致性，因而阻止对
-四轮接触 Jacobian 和最终估计结果作标定级验证。
+前 Airy DIFOP 标定已取得。`paramsM20.yaml` 使用 `P_imu = R_imu_lidar P_lidar +
+t_imu_lidar` 的方向，将 q/t 与前 LiDAR 到 `base_link` 变换组合为 `extrinsicRot`
+和 `extrinsicTrans`。该组合已通过矩阵正交性和测试 bag 静止重力方向离线检查，仍需
+ROS 回放及实机运动验证。
 
 ## 10. 轮地 manifold residuals
 
@@ -665,13 +662,13 @@ RBF residual 没有独立 factor 类型。它先改变当前扫描匹配结果�
 | Plane point-to-plane residual | 同上 | `surfOptimization()` | 5-NN、平面阈值 | `Jscan` 平面项 |
 | LiDAR analytic pose Jacobian | 同上 | `LMOptimization()` | 当前 RPY/XYZ | 线性化 scan residual |
 | Scan pose solve | 同上 | `LMOptimization()` | 特征行、RBF 行、退化阈值 | 六维未阻尼法方程 |
-| IMU preintegration | `LIO-SAM-MID360/src/imuPreintegration.cpp` | `odometryHandler()`、`imuHandler()` | IMU noise/bias/gravity | `X,V,B` 状态约束和传播 |
+| IMU preintegration | `LIO-SAM-MID360/src/imuPreintegration.cpp` | `odometryHandler()`、`imuHandler()` | IMU frequency/noise/bias/gravity | `X,V,B` 状态约束和传播 |
 | Keyframe odometry factor | `LIO-SAM-MID360/src/mapOptmization.cpp` | `addOdomFactor()` | 固定 noise | 关键帧图相对位姿 |
 | GPS factor | 同上 | `addGPSFactor()` | GPS/pose covariance thresholds | 绝对位置约束 |
 | Loop factor | 同上 | `performLoopClosure()`、`addLoopFactor()` | ICP fitness | 回环约束 |
 | Main RBF basis | `LIO-SAM-MID360/src/rbf_cuda_wheel_gradient.cpp` | `evaluateTerrain()` | `rbfSigmaX/Y` | 主轮地高度和梯度 |
 | Wheel kinematics | `LIO-SAM-MID360/src/rbf_wheel_kinematics.cpp` | `computeWheelGeometry()` | joint states、wheel radius | 轮心/轮轴 |
-| M20 model kinematics | `robot-description/M20/urdf/M20.urdf` | URDF joint chain（当前无主代码函数） | 16 joints、wheel radius 0.09 | 四轮迁移事实来源，**TODO** 接入 |
+| M20 model kinematics | `LIO-SAM-MID360/src/rbf_wheel_kinematics.cpp` | `M20JointStateWheelKinematics::computeWheelGeometry()` | 12 leg joints、wheel radius 0.09 | 生成四轮轮心/轮轴 |
 | Contact point solve | `LIO-SAM-MID360/src/rbf_cuda_wheel_gradient.cpp` | `solveContactOnWheel()` | r1/r2/r3、8 iterations | 每轮局部接触点 |
 | Manifold residual | 同上 | `evaluateResidualVector()` | weights、clamps | 每轮六行轮地残差 |
 | Manifold pose Jacobian | 同上 | `computeGradient()` | eps rotation/translation | 中心有限差分六列 Jacobian |
@@ -701,5 +698,5 @@ RBF residual 没有独立 factor 类型。它先改变当前扫描匹配结果�
 14. **UNKNOWN**：论文实验参数与当前 YAML/节点默认参数不一致的原因。
 15. **UNKNOWN**：仓库没有数值梯度检查、解析 Jacobian 对比或 rosbag 回归测试，无法仅从静态代码确认估计器的数值正确性。
 16. **UNKNOWN**：M20 APDU 关节角到 URDF joint variable 的符号、零偏和顺序转换；测试 bag 中存在超限值，不能仅凭变量名推断。
-17. **UNKNOWN**：前 Airy DIFOP 中 LiDAR-IMU 工厂旋转/平移标定；通用驱动 transform 参数不能替代该单机标定。
-18. **TODO**：M20 四轮运动学尚未生成四个 `WheelGeometry` 并接入现有残差接口。
+17. **TODO**：前 Airy DIFOP 与 URDF 组合外参尚未通过完整 ROS 回放和实机轨迹验收。
+18. **TODO**：M20 四轮运动学已接入，但尚无基于独立 URDF FK 实现的自动数值回归测试。

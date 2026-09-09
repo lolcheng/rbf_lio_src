@@ -61,28 +61,34 @@
 #include <array>
 #include <thread>
 #include <mutex>
+#include <utility>
 
 // Livox CustomMsg compatibility:
 // - Older ROS1 driver:  livox_ros_driver/CustomMsg
 // - Newer ROS1 driver:  livox_ros_driver2/CustomMsg
-// Your rosbag must match the message package name (MD5), so we select the
-// available header at compile time.
+// The selected header must have the same ROS message MD5 as the producer.
+#ifndef __has_include
+  #define __has_include(x) 0
+#endif
 #if __has_include(<livox_ros_driver2/CustomMsg.h>)
   #include <livox_ros_driver2/CustomMsg.h>
   namespace livox_msg = livox_ros_driver2;
   #define LIVOX_CUSTOMMSG_PKG "livox_ros_driver2"
+  #define LIO_SAM_HAS_LIVOX 1
 #elif __has_include(<livox_ros_driver/CustomMsg.h>)
   #include <livox_ros_driver/CustomMsg.h>
   namespace livox_msg = livox_ros_driver;
   #define LIVOX_CUSTOMMSG_PKG "livox_ros_driver"
+  #define LIO_SAM_HAS_LIVOX 1
 #else
-  #error "Neither <livox_ros_driver2/CustomMsg.h> nor <livox_ros_driver/CustomMsg.h> was found. Please install a Livox ROS1 driver (livox_ros_driver2 or livox_ros_driver)."
+  #define LIVOX_CUSTOMMSG_PKG "not available"
+  #define LIO_SAM_HAS_LIVOX 0
 #endif
 using namespace std;
 
 typedef pcl::PointXYZI PointType;
 
-enum class SensorType { VELODYNE, OUSTER, LIVOX };
+enum class SensorType { VELODYNE, OUSTER, LIVOX, AIRY };
 
 class ParamServer
 {
@@ -128,6 +134,7 @@ public:
 
     // IMU
     int imuType;
+    double imuFrequency;
     float imuAccNoise;
     float imuGyrNoise;
     float imuAccBiasN;
@@ -174,6 +181,7 @@ public:
     double rbfMaxAbsR3;
     double rbfMaxNormR4;
     std::string jointStateTopic;
+    std::string robotKinematicsModel;
     double wheelRadius;
     bool enableLidarZCalibration;
     double lidarZInit;
@@ -299,14 +307,25 @@ public:
         {
             sensor = SensorType::LIVOX;
         }
+        else if (sensorStr == "airy" || sensorStr == "robosense")
+        {
+            sensor = SensorType::AIRY;
+        }
         else
         {
             ROS_ERROR_STREAM(
-                "Invalid sensor type (must be either 'velodyne' or 'ouster' or 'livox'): " << sensorStr);
+                "Invalid sensor type (must be 'velodyne', 'ouster', 'livox' or 'airy'): " << sensorStr);
             ros::shutdown();
         }
 
         nh.param<int>("lio_sam/imuType", imuType, 0);
+        nh.param<double>("lio_sam/imuFrequency", imuFrequency, 500.0);
+        if (!std::isfinite(imuFrequency) || imuFrequency <= 0.0)
+        {
+            ROS_FATAL_STREAM("Invalid lio_sam/imuFrequency: " << imuFrequency);
+            ros::shutdown();
+            imuFrequency = 500.0;
+        }
 
         nh.param<int>("lio_sam/N_SCAN", N_SCAN, 16);
         nh.param<int>("lio_sam/Horizon_SCAN", Horizon_SCAN, 1800);
@@ -323,12 +342,24 @@ public:
         nh.param<vector<double>>("lio_sam/extrinsicRot", extRotV, vector<double>());
         nh.param<vector<double>>("lio_sam/extrinsicRPY", extRPYV, vector<double>());
         nh.param<vector<double>>("lio_sam/extrinsicTrans", extTransV, vector<double>());
-        extRot = Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(extRotV.data(), 3, 3);
-        extRPY = Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(extRPYV.data(), 3, 3);
-        extTrans = Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(extTransV.data(), 3, 1);
+        if (extRotV.size() != 9 || extRPYV.size() != 9 || extTransV.size() != 3)
+        {
+            ROS_FATAL("Invalid IMU extrinsics: extrinsicRot/extrinsicRPY require 9 values and extrinsicTrans requires 3 values.");
+            ros::shutdown();
+            extRot = Eigen::Matrix3d::Identity();
+            extRPY = Eigen::Matrix3d::Identity();
+            extTrans = Eigen::Vector3d::Zero();
+        }
+        else
+        {
+            extRot = Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(extRotV.data(), 3, 3);
+            extRPY = Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(extRPYV.data(), 3, 3);
+            extTrans = Eigen::Map<const Eigen::Matrix<double, -1, -1, Eigen::RowMajor>>(extTransV.data(), 3, 1);
+        }
         extQRPY = Eigen::Quaterniond(extRPY).inverse();
 
-        ROS_INFO_STREAM("[lio_sam] imuType: " << imuType << " imuGravity: " << imuGravity);
+        ROS_INFO_STREAM("[lio_sam] imuType: " << imuType << " imuFrequency: " << imuFrequency
+                        << " imuGravity: " << imuGravity);
         ROS_INFO_STREAM("[lio_sam] extrinsicTrans: [" << extTrans.x() << ", " << extTrans.y() << ", " << extTrans.z() << "]");
         ROS_INFO_STREAM("[lio_sam] extrinsicRot:\n" << extRot);
         ROS_INFO_STREAM("[lio_sam] extrinsicRPY:\n" << extRPY);
@@ -363,6 +394,7 @@ public:
         nh.param<double>("lio_sam/rbfMaxAbsR3", rbfMaxAbsR3, 0.08);
         nh.param<double>("lio_sam/rbfMaxNormR4", rbfMaxNormR4, 0.80);
         nh.param<std::string>("lio_sam/jointStateTopic", jointStateTopic, "/joint_states");
+        nh.param<std::string>("lio_sam/robotKinematicsModel", robotKinematicsModel, "tron1a");
         nh.param<double>("lio_sam/wheelRadius", wheelRadius, 0.127);
         nh.param<bool>("lio_sam/enableLidarZCalibration", enableLidarZCalibration, false);
         nh.param<double>("lio_sam/lidarZInit", lidarZInit, 0.0);

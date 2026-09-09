@@ -1,0 +1,127 @@
+lio_sam:
+  # First-stage M20 inputs. Rear Airy topics are intentionally unused.
+  pointCloudTopic: "/rslidar_points_front"
+  imuTopic: "/rslidar_imu_data_front"
+  odomTopic: "odometry/imu"
+  gpsTopic: "odometry/gpsz"
+  jointStateTopic: "/joint_states_m20"
+
+  lidarFrame: "base_link"
+  baselinkFrame: "base_link"
+  odometryFrame: "odom"
+  mapFrame: "map"
+
+  useImuHeadingInitialization: false
+  useGpsElevation: false
+  gpsCovThreshold: 2.0
+  poseCovThreshold: 25.0
+
+  savePCD: false
+  savePCDDirectory: "/Downloads/LOAM/"
+
+  sensor: airy
+  N_SCAN: 96
+  # The test bag contains at most 902 valid points in one ring per scan.
+  Horizon_SCAN: 1024
+  downsampleRate: 1
+  lidarMinRange: 0.2
+  lidarMaxRange: 60.0
+
+  # Airy publishes acceleration in g and does not publish orientation.
+  imuType: 0
+  imuFrequency: 200.0
+  # TODO: replace these carried-over baseline noise values with measured Airy values.
+  imuAccNoise: 1.0e-04
+  imuGyrNoise: 1.0e-04
+  imuAccBiasN: 1.0e-04
+  imuGyrBiasN: 1.0e-05
+  imuGravity: 9.8035
+  imuRPYWeight: 0.0
+
+  # R_base_imu = R_base_lidar * inverse(R_imu_lidar).
+  # DIFOP q_xyzw = [-0.703521, 0.710655, -0.00485685, 0.00199339].
+  extrinsicRot: [0.009667018, -0.004098306, -0.999944875,
+                 -0.999902180, 0.010069117, -0.009707874,
+                 0.010108348, 0.999940907, -0.004000567]
+  # The six-axis Airy message has no orientation estimate.
+  extrinsicRPY: [1.0, 0.0, 0.0,
+                 0.0, 1.0, 0.0,
+                 0.0, 0.0, 1.0]
+  # IMU origin in base_link, derived from the URDF front LiDAR translation and
+  # the DIFOP relation P_imu = R_imu_lidar * P_lidar + t_imu_lidar.
+  extrinsicTrans: [0.315796292, 0.004164198, -0.017240556]
+
+  # Raw front Airy frame -> M20 base_link. Driver ENABLE_TRANSFORM must remain OFF.
+  pointCloudTransformEnable: true
+  pointCloudRot: [0.0, 0.0, 1.0,
+                  0.0, 1.0, 0.0,
+                  -1.0, 0.0, 0.0]
+  pointCloudTrans: [0.32028, 0.0, -0.013]
+
+  edgeThreshold: 1.0
+  surfThreshold: 0.1
+  edgeFeatureMinValidNum: 10
+  surfFeatureMinValidNum: 100
+
+  odometrySurfLeafSize: 0.2
+  mappingCornerLeafSize: 0.1
+  mappingSurfLeafSize: 0.2
+
+  z_tollerance: 1000.0
+  rotation_tollerance: 1000.0
+
+  numberOfCores: 4
+  mappingProcessInterval: 0.15
+  robotKinematicsModel: "m20"
+  # Keep disabled for the current interface-only bag because some joint values
+  # violate URDF limits. Enable after validating native GOS joint coordinates.
+  enableRbfConstraint: false
+  # TODO: tune these carried-over RBF values on validated M20 data.
+  rbfConstraintWeight: 0.35
+  rbfConstraintMaxPoints: 2000
+  rbfSigmaX: 0.07
+  rbfSigmaY: 0.07
+  rbfNodeMaxNum: 4000
+  rbfWeightR1: 1.0
+  rbfWeightR2: 0.05
+  rbfWeightR3: 0.02
+  rbfWeightR4: 0.05
+  rbfMaxAbsR1: 0.50
+  rbfMaxAbsR2: 0.30
+  rbfMaxAbsR3: 0.30
+  rbfMaxNormR4: 2.00
+  # M20.urdf wheel collision radius. The manual's 0.18 m cushion radius differs.
+  wheelRadius: 0.09
+
+  # Keep the URDF/DIFOP calibration fixed during initial M20 validation.
+  enableLidarZCalibration: false
+  lidarZInit: 0.0
+  lidarZMin: -0.08
+  lidarZMax: 0.08
+  lidarZLearningRate: 0.0015
+  lidarResidualEmaAlpha: 0.10
+  lidarResidualDeadband: 0.002
+  lidarResidualMinConstraintNum: 12
+
+  surroundingkeyframeAddingDistThreshold: 0.5
+  surroundingkeyframeAddingAngleThreshold: 0.1
+  surroundingKeyframeDensity: 0.5
+  surroundingKeyframeSearchRadius: 20.0
+
+  loopClosureEnableFlag: true
+  loopClosureFrequency: 1.0
+  surroundingKeyframeSize: 25
+  historyKeyframeSearchRadius: 15.0
+  historyKeyframeSearchTimeDiff: 30.0
+  historyKeyframeSearchNum: 25
+  historyKeyframeFitnessScore: 0.3
+
+  globalMapVisualizationSearchRadius: 1000.0
+  globalMapVisualizationPoseDensity: 1.0
+  globalMapVisualizationLeafSize: 0.3
+
+  failureDetectionVelTh: 30.0
+  failureDetectionAccBiasTh: 3.0
+  failureDetectionGyrBiasTh: 1.0
+  debugPrintImu: true
+  debugPrintImuPeriod: 1.0

@@ -1,0 +1,28 @@
+std_msgs/Header header
+time source_stamp
+uint32 source_sequence
+uint16 apdu_message_id
+string device_time
+bool repeated
+bool stale
+float64 source_age
+
+float64 left_front_hip_x
+float64 left_front_hip_y
+float64 left_front_knee
+float64 left_front_wheel_speed
+
+float64 right_front_hip_x
+float64 right_front_hip_y
+float64 right_front_knee
+float64 right_front_wheel_speed
+
+float64 left_back_hip_x
+float64 left_back_hip_y
+float64 left_back_knee
+float64 left_back_wheel_speed
+
+float64 right_back_hip_x
+float64 right_back_hip_y
+float64 right_back_knee
+float64 right_back_wheel_speed

@@ -1,0 +1,58 @@
+<launch>
+    <arg name="rosconsole" default="info"/>
+    <arg name="with_rviz" default="true"/>
+    <arg name="with_robot_tf" default="true"/>
+    <arg name="with_rbf_visualization" default="false"/>
+    <arg name="enable_rbf_constraint" default="false"/>
+    <arg name="use_sim_time" default="false"/>
+    <arg name="tum_trajectory_path" default=""/>
+    <arg name="rbf_file_path" default="/tmp/rbf_lio_m20"/>
+
+    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find lio_sam)/launch/include/rosconsole/rosconsole_$(arg rosconsole).conf"/>
+    <rosparam file="$(find lio_sam)/config/paramsM20.yaml" command="load"/>
+    <param name="/use_sim_time" value="$(arg use_sim_time)"/>
+    <param name="lio_sam/enableRbfConstraint" value="$(arg enable_rbf_constraint)"/>
+    <param name="lio_sam/saveTUMTrajectoryPath" value="$(arg tum_trajectory_path)"/>
+
+    <!-- The publisher may use m20_udp_bridge/M20JointsData. The local message
+         has the same ROS 1 MD5 and avoids a permanent build dependency on the
+         temporary bridge package. -->
+    <node name="m20_joint_state_adapter"
+          pkg="lio_sam"
+          type="m20_joint_state_adapter.py"
+          output="screen"
+          respawn="true">
+        <param name="input_topic" value="/JOINTS_DATA"/>
+        <param name="output_topic" value="/joint_states_m20"/>
+        <param name="drop_stale" value="true"/>
+        <!-- APDU values are treated as URDF joint coordinates. Keep these
+             configurable until the final native GOS 500 Hz feed is verified. -->
+        <rosparam param="position_scale">[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]</rosparam>
+        <rosparam param="position_offset">[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]</rosparam>
+        <rosparam param="wheel_velocity_scale">[1, 1, 1, 1]</rosparam>
+    </node>
+
+    <include file="$(find lio_sam)/launch/include/module_loam.launch"/>
+
+    <param name="robot_description" textfile="$(find robot_description)/M20/urdf/M20.urdf"/>
+    <node if="$(arg with_robot_tf)"
+          name="robot_state_publisher"
+          pkg="robot_state_publisher"
+          type="robot_state_publisher"
+          output="screen"
+          respawn="true">
+        <remap from="/joint_states" to="/joint_states_m20"/>
+    </node>
+
+    <node if="$(arg with_rbf_visualization)"
+          pkg="cuda_rbf"
+          type="elevation_rbf"
+          name="elevation_rbf"
+          output="screen">
+        <remap from="/local_map" to="/lio_sam/mapping/map_local"/>
+        <remap from="/Odometry" to="/lio_sam/mapping/odometry_incremental"/>
+        <param name="file_path" value="$(arg rbf_file_path)"/>
+    </node>
+
+    <include if="$(arg with_rviz)" file="$(find lio_sam)/launch/include/module_rviz.launch"/>
+</launch>

@@ -4,6 +4,9 @@
 
 本文件适用于整个仓库。
 
+在新的 Ubuntu 20.04 环境或新的 Codex 会话中接续 M20 迁移前，先阅读
+`docs/HANDOFF_UBUNTU.md`，并以其中的验证状态和 TODO 顺序为当前交接基线。
+
 以仓库中当前提交的代码作为首要事实来源。`support/RBF_LIO.pdf` 用于理解预期的算法、术语、残差定义和实验设置，但不得假定论文中的所有功能均已实现。
 当论文与代码不一致时，应记录差异，并保持当前代码行为，除非任务明确要求弥合该差异。
 
@@ -13,7 +16,7 @@
 
 RBF-LIO 是一个面向轮腿机器人非平整地形运动的 ROS 1 激光雷达-惯性里程计与建图工程。它在 LIO-SAM 风格的处理链上增加了以下能力：
 
-- 接收 Livox MID360 点云，并使用 IMU 对扫描进行去畸变。
+- 接收 Livox MID360 `CustomMsg` 或前置 RoboSense Airy `PointCloud2`，并使用对应 IMU 对扫描进行去畸变。
 - 提取 LOAM 边缘特征和平面特征。
 - 执行扫描到地图位姿优化以及 iSAM2 关键帧因子图优化。
 - 根据关节状态计算车轮运动学。
@@ -26,7 +29,7 @@ RBF-LIO 是一个面向轮腿机器人非平整地形运动的 ROS 1 激光雷�
 
 ### 仓库软件包
 
-- `LIO-SAM-MID360`（ROS 包名 `lio_sam`）：主要运行包和当前事实来源。包含 MID360 预处理、特征提取、IMU 预积分、地图优化、回环检测、车轮运动学以及RBF/接触约束注入。
+- `LIO-SAM-MID360`（ROS 包名 `lio_sam`）：主要运行包和当前事实来源。包含 MID360/Airy 预处理、特征提取、IMU 预积分、地图优化、回环检测、Tron1A/M20 车轮运动学以及 RBF/接触约束注入。
 - `rbf_cuda`（ROS 包名 `cuda_rbf`）：包含 CUDA RBF 拟合库、独立高程节点、诊断程序，以及一套旧版 LIO-SAM 处理链。
 - `robot-description`（ROS 包名 `robot_description`）：当前保留 M20 URDF 和网格
   资源，用于 M20 迁移时的机器人模型与运动学事实来源。原 Tron1A 模型文件已被
@@ -47,7 +50,7 @@ RBF-LIO 是一个面向轮腿机器人非平整地形运动的 ROS 1 激光雷�
 由以下节点组成：
 
 1. `lio_sam_imageProjection`
-   - 输入：Livox `CustomMsg`、IMU、增量 IMU 里程计、自适应 LiDAR z 偏移。
+   - 输入：Livox `CustomMsg` 或 Airy `PointCloud2`、IMU、增量 IMU 里程计、自适应 LiDAR z 偏移。
    - 处理：点云坐标变换、扫描缓存、旋转去畸变、距离图组织。
    - 输出：`lio_sam/deskew/cloud_info` 和去畸变点云。
 2. `lio_sam_featureExtraction`
@@ -68,8 +71,8 @@ RBF-LIO 是一个面向轮腿机器人非平整地形运动的 ROS 1 激光雷�
 
 ### RBF 与轮地接触组件
 
-- `LIO-SAM-MID360/src/rbf_wheel_kinematics.cpp`：接收 Tron1A 的 8 个关节位置，
-  计算左右轮在世界坐标系下的轮心和轮轴。
+- `LIO-SAM-MID360/src/rbf_wheel_kinematics.cpp`：按 `robotKinematicsModel` 接收
+  Tron1A 的 8 个关节位置或 M20 的 12 个腿关节位置，计算两轮或四轮在世界坐标系下的轮心和轮轴。
 - `LIO-SAM-MID360/src/rbf_cuda_wheel_gradient.cpp`：求解等效轮地接触点，计算
   地形/接触残差块，并通过数值差分计算位姿 Jacobian。
 - `LIO-SAM-MID360/src/mapOptmization.cpp::updateRbfLmConstraints`：构造 RBF
@@ -86,7 +89,7 @@ RBF-LIO 是一个面向轮腿机器人非平整地形运动的 ROS 1 激光雷�
 ### 运行时数据流
 
 ```text
-Livox 点云 + IMU
+Livox 点云或前 Airy 点云 + 对应 IMU
     -> imageProjection
     -> featureExtraction
     -> mapOptimization（LOAM 残差 + 轮地残差）
@@ -95,7 +98,7 @@ Livox 点云 + IMU
 mapOptimization 校正 -> IMUPreintegration
 IMUPreintegration 预测 -> imageProjection + mapOptimization 初值
 
-/joint_states -> JointStateWheelKinematics -> 车轮几何 -> RBF 约束
+/joint_states -> Tron1A/M20 WheelKinematics -> 车轮几何 -> RBF 约束
 mapOptimization 残差 -> 自适应 LiDAR z 偏移 -> imageProjection
 
 局部地图 + 建图里程计 -> elevation_rbf -> 仅用于 RBF 可视化
@@ -103,7 +106,7 @@ mapOptimization 残差 -> 自适应 LiDAR z 偏移 -> imageProjection
 
 ### M20/Airy 迁移边界
 
-当前主代码尚未完成 M20/Airy 适配。第一阶段迁移只使用前置 Airy 点云、前置
+当前主代码已完成第一阶段 M20/Airy 结构性适配，只使用前置 Airy 点云、前置
 Airy IMU 和机体关节数据；后置 Airy 点云及两台雷达之外的其他 IMU 不进入主估计：
 
 - `/rslidar_points_front`：`sensor_msgs/PointCloud2`，96 个 ring，点字段包含
@@ -113,16 +116,20 @@ Airy IMU 和机体关节数据；后置 Airy 点云及两台雷达之外的其�
 - `/JOINTS_DATA`：测试包中约 500 Hz 发布，但有效源样本约 10 Hz 且大量重复；最终
   版本要求由 GOS 直接提供真实 500 Hz 数据。
 
+`run_m20.launch` 加载 `paramsM20.yaml`。`ImageProjection::airyCloudHandler()` 将
+Airy 的绝对逐点 `timestamp` 转为相对扫描时间；`m20_joint_state_adapter.py` 将
+`/JOINTS_DATA` 转为 `/joint_states_m20`；`M20JointStateWheelKinematics` 按 URDF
+四条腿生成四个 `WheelGeometry`。这些入口尚未在 Linux/ROS Noetic 中完整编译和回放验证。
+
 M20 运动学、关节方向、零位、限位和轮尺寸以
 `robot-description/M20/urdf/M20.urdf` 为准。当前测试 bag 的若干关节值超出 URDF
 限位，因此只能验证消息接口，不能验证轮地接触几何。
 
-Airy 驱动配置和启动日志已经确认双雷达端口、话题、时间戳选项及驱动侧变换参数，
-但没有提供前置 Airy 单机 DIFOP 中的 LiDAR-IMU 内部旋转/平移标定。驱动侧前雷达
-变换 `[0.0501, 0, 0.739]`、pitch `+pi/2` 也与 M20 URDF 的前雷达安装位姿
-`[0.32028, 0, -0.013]`、零 RPY 不一致。修改主链前必须明确点云在哪一层完成坐标
-变换，避免驱动和 RBF-LIO 重复变换；IMU 与点云必须最终落在一致且有据可查的坐标
-约定中。
+前置 Airy DIFOP 已提供 LiDAR 到 IMU 标定
+`q_xyzw=[-0.703521,0.710655,-0.00485685,0.00199339]`、
+`t=[0.00425,0.00418,-0.00446]`。`paramsM20.yaml` 将其与前 LiDAR 安装变换组合。
+参考驱动构建缓存显示 `ENABLE_TRANSFORM=OFF`，M20 主链由 RBF-LIO 负责点云变换；
+实际部署必须保持这一责任边界，避免驱动和 RBF-LIO 重复变换。
 
 ## 编译方法
 
@@ -132,9 +139,9 @@ Airy 驱动配置和启动日志已经确认双雷达端口、话题、时间戳
 
 - Ubuntu 20.04、ROS Noetic 和 Catkin。
 - PCL、OpenCV、Eigen3、Boost（包括 `timer`）、OpenMP 和 GTSAM。
-- ROS 1 Livox 驱动。CMake 当前声明依赖 `livox_ros_driver`；源代码在头文件
-  可用时能够包含 `livox_ros_driver/CustomMsg.h` 或
-  `livox_ros_driver2/CustomMsg.h`。
+- 可选 ROS 1 Livox 驱动。源代码在头文件可用时包含
+  `livox_ros_driver/CustomMsg.h` 或 `livox_ros_driver2/CustomMsg.h`；仅构建
+  M20/Airy 路径不要求 Livox 包。
 - `cuda_rbf` 包所需的 CUDA Toolkit、Thrust、cuBLAS 和 cuSOLVER。
 - 独立高程节点所需的 `nlohmann_json`。
 - 使用 `fk.py` 时所需的 Python ROS 包、`urdfpy`、NumPy 和
@@ -169,9 +176,8 @@ source devel/setup.bash
 `cuda_rbf` 在配置和编译时必须存在 CUDA。`lio_sam` 在 CMake 中将 CUDA 视为
 可选依赖，但当前车轮接触残差仍在 CPU 上运行，即使辅助 CUDA 库已成功构建。
 
-当前 `robot-description/CMakeLists.txt` 仍安装已删除的 `pointfoot/wheellegged`
-目录，尚未安装 `M20`。因此上述三包命令只记录预期工作区结构，不得声称当前检出
-已经能够完整构建；M20 描述包适配属于后续迁移修改。
+`robot-description/CMakeLists.txt` 当前安装 `M20` 目录。由于本次修改尚未在
+受支持的 Linux/ROS 环境实际编译，仍不得声称当前检出已经完整构建成功。
 
 除非已经在受支持的 Linux/ROS 环境中实际完成编译，否则不要声称构建成功。
 构建产物应放在外部工作区，或标准的 `build`、`devel`、`install`、`log`
@@ -191,9 +197,18 @@ roslaunch lio_sam run_tron1a_all.launch \
   rbf_file_path:=/absolute/output/rbf_stats
 ```
 
-当前 `robot-description` 中的 Tron1A 模型已被删除，而该 launch 仍引用相应模型，
-因此不得将上述命令描述为当前检出的可用 M20 启动方式。M20 launch 和参数文件尚未
-接入主代码，状态为 **TODO**。
+当前 `robot-description` 中的 Tron1A 模型已被删除，而该历史 launch 仍引用相应模型，
+因此不得将上述命令描述为 M20 启动方式。M20 使用：
+
+```bash
+rosparam set use_sim_time true
+roslaunch lio_sam run_m20.launch with_rviz:=true with_robot_tf:=true enable_rbf_constraint:=false
+rosbag play --clock /absolute/path/to/data/rosbag/m20_upstairs.bag
+```
+
+上述命令由当前 launch/config 支持，但尚无 Linux/ROS 成功回放记录。
+当前测试 bag 的关节值未通过 URDF 限位验证，因此 M20 launch 默认关闭主 RBF 约束；
+只有在关节方向和零位确认后才应使用 `enable_rbf_constraint:=true`。
 
 运行前应检查 `LIO-SAM-MID360/config/paramsLivoxIMU.yaml` 中的话题配置。仓库
 中的默认值对应一个特定 MID360 地址，通常不会自动匹配其他设备或 rosbag。
@@ -242,8 +257,8 @@ roslaunch lio_sam run_tron1a_all.launch \
   求每个接触点，再使用中心有限差分计算位姿导数。
 - CUDA 车轮残差/Jacobian 内核已经存在，并在找到 CUDA 时参与编译，但没有
   运行时调用点。当前有效的轮地残差和 Jacobian 实现为 CPU 代码。
-- 论文公式支持与平台相关的车轮集合，并包含四轮实验。仓库中的运动学实现仅针对
-  Tron1A 两轮结构。
+- 论文公式支持与平台相关的车轮集合。仓库现在具有 Tron1A 两轮和 M20 四轮两个
+  明确运动学实现，但 M20 尚未完成实机几何与轨迹验证。
 - 代码增加了由接触残差统计驱动的自适应 LiDAR z 偏移反馈环。它是仓库特有的
   扩展，不是从论文直接推导出的必要实现。
 
@@ -300,6 +315,8 @@ roslaunch lio_sam run_tron1a_all.launch \
 ### ROS 与配置
 
 - 可调参数应通过 `ParamServer` 和 YAML 加载，不要在回调函数中嵌入新的常量。
+- IMU 初始化步长由 `lio_sam/imuFrequency` 设置；M20/Airy 当前为 `200 Hz`，历史
+  配置未显式设置时保留 `500 Hz` 默认值。
 - 队列大小和回调线程数必须经过考虑；高频 IMU 和关节输入不能被耗时地图或 RBF
   运算阻塞。
 - 重新发布消息时应保持时间戳同步和正确的 frame ID。

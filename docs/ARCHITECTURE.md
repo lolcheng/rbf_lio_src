@@ -13,17 +13,17 @@
 
 ## 1.1 项目解决的问题
 
-本项目是面向轮腿机器人非平整地形运动的 ROS 1 激光雷达-惯性里程计与建图工程。当前主实现基于 LIO-SAM 风格的处理链，接收 Livox MID360 点云和 IMU，完成：
+本项目是面向轮腿机器人非平整地形运动的 ROS 1 激光雷达-惯性里程计与建图工程。当前主实现基于 LIO-SAM 风格的处理链，可接收 Livox `CustomMsg`，也可通过 M20 配置接收前置 RoboSense Airy `PointCloud2` 和内置 IMU，完成：
 
 - 点云坐标变换、扫描组织和 IMU 旋转去畸变。
 - LOAM 风格的边缘和平面特征提取。
 - 扫描到局部地图的六自由度迭代优化。
 - 基于 GTSAM iSAM2 的关键帧因子图优化。
 - 基于 GTSAM IMU 预积分的速度、位姿和 IMU 偏置估计。
-- 基于 Tron1A 关节状态和轮地接触几何的附加约束。
+- 基于 Tron1A 两轮或 M20 四轮关节运动学和轮地接触几何的附加约束。
 - 地图、里程计、轨迹、回环和诊断结果发布。
 
-主程序位于 `LIO-SAM-MID360`，ROS 包名为 `lio_sam`。历史综合启动入口是 `LIO-SAM-MID360/launch/run_tron1a_all.launch`；该文件仍引用已经从 `robot-description` 删除的 Tron1A 模型，因此当前检出中不能把它视为已完成的 M20 启动入口。
+主程序位于 `LIO-SAM-MID360`，ROS 包名为 `lio_sam`。M20 入口是 `LIO-SAM-MID360/launch/run_m20.launch`，加载 `config/paramsM20.yaml`；`run_tron1a_all.launch` 仅保留为历史 Tron1A 入口。
 
 ## 1.2 RBF-LIO 在系统中的定位
 
@@ -36,15 +36,19 @@
 
 ## 1.3 M20/Airy 迁移现状
 
-M20 迁移的硬件与接口参考已经进入仓库，但尚未进入上述主运行链：
+M20/Airy 已接入主运行链，当前状态如下：
 
 - `robot-description/M20/urdf/M20.urdf` 提供四条腿、16 个关节、四个车轮和前后 LiDAR 固定关节；迁移时以此处的关节轴、零位、限位和轮半径 `0.09 m` 为准。
 - `data/rosbag/m20_upstairs.bag` 提供前后 Airy `PointCloud2`、前后 Airy IMU 以及 M20 自定义关节/机体消息，用于接口分析。
 - 第一阶段目标输入已限定为前置 Airy 点云 `/rslidar_points_front`、前置 Airy IMU `/rslidar_imu_data_front` 和 `/JOINTS_DATA`。后置点云和后置 IMU不进入第一阶段估计。
 - `support/rslidar_ros2_ws` 通过 Git submodule 固定 RoboSense SDK v1.5.19 和 `rslidar_msg`；M20 配置及构建差异位于 submodule 外。当前主估计器是 ROS 1，仓库中尚无 ROS 1/ROS 2 桥接或原生 ROS 2 主估计器实现。
 - `support/m20_udp_bridge.zip` 是临时测试桥。当前 bag 中 `/JOINTS_DATA` 虽约为 500 Hz，但仅约 10 Hz 的源样本有效更新，其余为重复发布；最终接口要求由 GOS 直接提供真实 500 Hz 数据。
+- `ImageProjection::airyCloudHandler()` 校验 `x/y/z/intensity/ring/timestamp` 字段，把绝对逐点时间转换为相对扫描时间，并按 96 个 ring 组织距离图。
+- `m20_joint_state_adapter.py` 将与本地 `M20JointsData.msg` 具有相同 ROS 1 MD5 的 `/JOINTS_DATA` 转为 `/joint_states_m20`。测试桥消息与本地消息的 MD5 均为 `fb86770770e356b2075846629adc617b`。
+- `M20JointStateWheelKinematics` 按 M20 URDF 的四条关节链生成四个 `WheelGeometry`，由 `robotKinematicsModel: m20` 选择。
+- 前 Airy DIFOP 已给出 LiDAR 到 IMU 标定：`q_xyzw=[-0.703521,0.710655,-0.00485685,0.00199339]`、`t=[0.00425,0.00418,-0.00446]`。`paramsM20.yaml` 将其与前 LiDAR 安装变换组合为 IMU 到 `base_link` 的向量旋转和平移。
 
-因此，“M20/Airy 输入资料齐备”和“主算法已适配 M20”是两个不同状态；后者当前仍为 **TODO**。
+尚未完成的是 Linux/ROS 实编译、整包回放、实机轨迹验收、ROS 1/ROS 2 在线桥接，以及最终 GOS 原生 500 Hz 关节接口。
 
 # 2. Repository Structure（仓库结构）
 
@@ -55,11 +59,11 @@ M20 迁移的硬件与接口参考已经进入仓库，但尚未进入上述主�
 | `LIO-SAM-MID360/` | MID360 主 LIO、轮地约束、IMU 预积分、地图优化 | 当前主实现 |
 | `LIO-SAM-MID360/src/` | 四个核心节点及轮地约束实现 | 主运行代码 |
 | `LIO-SAM-MID360/include/` | 参数服务器、消息辅助、RBF 接口、运动学声明 | 主公共头文件 |
-| `LIO-SAM-MID360/config/` | 通用、六轴/MID360、九轴 IMU 参数 | 主配置来源 |
+| `LIO-SAM-MID360/config/` | 通用、MID360、九轴 IMU 和 M20/Airy 参数 | 主配置来源 |
 | `LIO-SAM-MID360/launch/` | 综合启动和模块化 launch | 主运行入口 |
-| `LIO-SAM-MID360/msg/` | `cloud_info.msg` | 节点间点云和初值载体 |
+| `LIO-SAM-MID360/msg/` | `cloud_info.msg`、`M20JointsData.msg` | 节点间点云载体和 M20 桥兼容消息 |
 | `LIO-SAM-MID360/srv/` | `save_map.srv` | 地图保存服务契约 |
-| `LIO-SAM-MID360/scripts/` | 关节名称适配器 | 可选机器人 TF 辅助 |
+| `LIO-SAM-MID360/scripts/` | Tron1A 关节名适配器、M20 消息适配器 | 机器人 TF/运动学输入辅助 |
 | `rbf_cuda/` | CUDA RBF 库、独立高程节点、诊断程序 | 辅助/实验包 |
 | `rbf_cuda/include/rbf_fitting/` | `VoxelGridRBF` 模板实现 | 独立 RBF 拟合核心 |
 | `rbf_cuda/src/cuda/` | CUDA/Thrust/cuBLAS/cuSOLVER 实现 | 独立 RBF GPU 后端 |
@@ -153,7 +157,13 @@ source devel/setup.bash
 
 # 4. Runtime Architecture（运行时架构）
 
-## 4.1 历史综合启动入口
+## 4.1 M20 综合启动入口
+
+`LIO-SAM-MID360/launch/run_m20.launch` 加载 `paramsM20.yaml`，启动 `/JOINTS_DATA`
+适配器、四个 LIO 主节点、M20 `robot_description`，并可选启动
+`robot_state_publisher`、独立 `elevation_rbf` 和 RViz。
+
+## 4.2 历史综合启动入口
 
 `LIO-SAM-MID360/launch/run_tron1a_all.launch` 执行以下操作：
 
@@ -165,24 +175,25 @@ source devel/setup.bash
 6. 可选包含 `cuda_rbf/launch/run_rbf.launch`。
 7. 可选启动 RViz。
 
-## 4.2 主节点
+## 4.3 主节点
 
 | ROS 可执行文件 | 主要类 | 输入 | 主要输出 |
 | --- | --- | --- | --- |
-| `lio_sam_imageProjection` | `ImageProjection` | Livox、IMU、高频 IMU 里程计、LiDAR z 偏移 | 去畸变点云、deskew `cloud_info` |
+| `lio_sam_imageProjection` | `ImageProjection` | Livox 或 Airy 点云、IMU、高频 IMU 里程计、LiDAR z 偏移 | 去畸变点云、deskew `cloud_info` |
 | `lio_sam_featureExtraction` | `FeatureExtraction` | deskew `cloud_info` | 角点、平面点、feature `cloud_info` |
 | `lio_sam_mapOptmization` | `mapOptimization` | feature `cloud_info`、GPS、外部回环、关节状态 | 地图里程计、地图、路径、RBF 统计、z 偏移 |
 | `lio_sam_imuPreintegration` | `IMUPreintegration`、`TransformFusion` | IMU、地图校正、高频 IMU 里程计 | IMU 增量里程计、融合里程计、IMU 路径、TF |
 
 `mapOptimization::main()` 还启动回环线程 `loopClosureThread()` 和全局地图可视化线程 `visualizeGlobalMapThread()`。
 
-## 4.3 可选/辅助节点
+## 4.4 可选/辅助节点
 
 | 节点 | 启动条件 | 作用 |
 | --- | --- | --- |
 | `elevation_rbf` | `with_rbf:=true` | 独立 CUDA RBF 拟合和 `/rbf_elevation_map` 发布 |
 | `legged_fk` (`fk.py`) | 随 `run_rbf.launch` 启动 | 从 URDF 和 `/joint_states` 发布轮子 TF |
 | `joint_state_name_adapter` | `with_robot_tf:=true` | 将 `joint_0...joint_7` 映射为 Tron1A 具名关节 |
+| `m20_joint_state_adapter` | M20 launch 固定启动 | 将 `/JOINTS_DATA` 映射为 `/joint_states_m20` |
 | `robot_state_publisher` | `with_robot_tf:=true` | 发布机器人 link TF |
 | `ekf_gps`、`navsat` | 仅由部分通用 launch 包含 | `robot_localization` GPS 辅助链 |
 
@@ -193,10 +204,10 @@ source devel/setup.bash
 ## 5.1 LiDAR
 
 ```text
-pointCloudTopic (Livox CustomMsg)
-  -> ImageProjection::cloudHandler()
-  -> cachePointCloud()
-  -> moveFromCustomMsg()
+pointCloudTopic (Livox CustomMsg / Airy PointCloud2)
+  -> ImageProjection::livoxCloudHandler() / airyCloudHandler()
+  -> cachePointCloud() / cacheAiryPointCloud()
+  -> moveFromCustomMsg() / moveFromAiryMsg()
   -> deskewInfo()/projectPointCloud()/cloudExtraction()
   -> lio_sam/deskew/cloud_info
   -> FeatureExtraction::laserCloudInfoHandler()
@@ -206,7 +217,7 @@ pointCloudTopic (Livox CustomMsg)
   -> mapping odometry / keyframes / map
 ```
 
-`ImageProjection` 缓存两帧后处理队首扫描。`moveFromCustomMsg()` 可应用 `pointCloudRot`、`pointCloudTrans` 和动态 z 偏移。代码只接受 Livox `CustomMsg` 路径；非 `SensorType::LIVOX` 会报错并关闭节点。
+`ImageProjection` 缓存两帧后处理队首扫描。`moveFromCustomMsg()` 和 `moveFromAiryMsg()` 均可应用 `pointCloudRot`、`pointCloudTrans` 和动态 z 偏移；当前可建立 Livox 或 Airy 两种订阅，其他枚举值会报错并关闭节点。
 
 扫描去畸变使用 IMU 积分旋转。`ImageProjection::findPosition()` 当前将位置增量设为零，平移去畸变未接通。
 
@@ -244,13 +255,13 @@ imuTopic
 
 GPS 原始接收机、关节硬件驱动和外部回环提示生产者不在仓库中，其实际来源为 **UNKNOWN**。
 
-## 5.4 M20 测试输入（尚未接入）
+## 5.4 M20 测试输入
 
 | 输入 | 已确认接口 | 测试数据特征 | 当前主代码状态 |
 | --- | --- | --- | --- |
-| 前 Airy 点云 | `/rslidar_points_front`, `sensor_msgs/PointCloud2` | 约 10 Hz；96 rings；字段 `x/y/z/intensity/ring/timestamp`；每点时间为绝对时间 | `ImageProjection` 只接收 Livox `CustomMsg`，待适配 |
-| 前 Airy IMU | `/rslidar_imu_data_front`, `sensor_msgs/Imu` | 约 200 Hz；orientation 未提供；加速度量级约 `1 g` | 消息类型可复用，但外参仍待确认 |
-| M20 关节 | `/JOINTS_DATA`, M20 自定义消息 | 表面约 500 Hz；测试桥实际约 10 Hz 新样本并重复发布；若干关节值超出 URDF 限位 | 主代码只订阅 `sensor_msgs/JointState` 且硬编码两轮运动学，待适配 |
+| 前 Airy 点云 | `/rslidar_points_front`, `sensor_msgs/PointCloud2` | 约 10 Hz；96 rings；字段 `x/y/z/intensity/ring/timestamp`；每点时间为绝对时间 | `airyCloudHandler()` 已接入；转换、去畸变和距离图待 ROS 回放验证 |
+| 前 Airy IMU | `/rslidar_imu_data_front`, `sensor_msgs/Imu` | 约 200 Hz；orientation 未提供；加速度量级约 `1 g` | 已由 `imuType: 0` 和组合 DIFOP 外参接入 |
+| M20 关节 | `/JOINTS_DATA`, M20 自定义消息 | 表面约 500 Hz；测试桥实际约 10 Hz 新样本并重复发布；若干关节值超出 URDF 限位 | 适配器发布 `/joint_states_m20`，四轮运动学已接入；角值约定仍待实机验证 |
 | 后 Airy 点云/IMU | 对应 `_rear` topic | bag 中存在 | 第一阶段明确不使用 |
 
 `/IMU` 机体自定义消息在测试 bag 中存在，但其有效更新频率同样约 10 Hz，且字段是
@@ -261,7 +272,7 @@ GPS 原始接收机、关节硬件驱动和外部回环提示生产者不在仓�
 
 ## 6.1 点云预处理
 
-入口：`ImageProjection::cloudHandler()`，文件 `LIO-SAM-MID360/src/imageProjection.cpp`。
+入口：Livox 使用 `ImageProjection::livoxCloudHandler()`，Airy 使用 `ImageProjection::airyCloudHandler()`，文件 `LIO-SAM-MID360/src/imageProjection.cpp`。
 
 1. `cachePointCloud()` 缓存和取出扫描，确定 `timeScanCur/timeScanEnd`。
 2. `moveFromCustomMsg()` 将 Livox 点转换为内部 `PointXYZIRT`。
@@ -358,7 +369,7 @@ mapOptimization::LMOptimization()
 - `request.pose`：`transformTobeMapped[roll,pitch,yaw,x,y,z]`。
 - `request.points_lidar`：当前降采样平面点，随后补充角点，受 `rbfConstraintMaxPoints` 限制。
 - `request.rbf_nodes`：局部地图降采样平面点，受 `rbfNodeMaxNum` 限制。
-- 两轮几何：由 `/joint_states` 和 Tron1A 硬编码运动学计算。
+- 轮几何：由 `/joint_states` 的 Tron1A 两轮模型或 `/joint_states_m20` 的 M20 四轮模型计算。
 
 ### 当前实际地形求值
 
@@ -445,7 +456,7 @@ lio_sam/mapping/odometry_incremental
 
 `extrinsicRot` 用于旋转加速度和角速度，`extrinsicRPY` 用于 IMU 姿态变换，`extrinsicTrans` 用于 `lidar2Imu/imu2Lidar` 的平移 Pose3。相关代码在 `ParamServer::imuConverter()` 和 `IMUPreintegration` 构造函数中。
 
-`pointCloudTransformEnable`、`pointCloudRot`、`pointCloudTrans` 是另一组直接作用于 Livox 点坐标的变换。主配置中它被启用，并设置 `pointCloudTrans.z=0.15`。
+`pointCloudTransformEnable`、`pointCloudRot`、`pointCloudTrans` 直接作用于 Livox 或 Airy 点坐标。历史 MID360 配置设置 `pointCloudTrans.z=0.15`；M20 配置使用前 Airy 到 `base_link` 的旋转和 URDF 平移。
 
 当 `lidarFrame` 不等于 `base_link` 时，硬编码轮腿运动学的位姿究竟应解释为 LiDAR 位姿还是 base 位姿，代码没有显式转换，标记为 **UNKNOWN/TODO**。
 
@@ -459,15 +470,15 @@ LiDAR 固定关节分别为：
 | `front_lidar_link` | `base_link` | `[0.32028, 0, -0.013]` | `[0, 0, 0]` | `robot-description/M20/urdf/M20.urdf` |
 | `rear_lidar_link` | `base_link` | `[-0.32028, 0, -0.013]` | `[0, 0, 0]` | 同上 |
 
-Airy 驱动配置却对前雷达设置 `[0.0501, 0, 0.739]`、pitch `+1.570795`，对后雷达
-设置 `[-0.32028, 0, -0.013]`、pitch `-1.57079`；两路消息 frame 分别写为
-`rslidar_front` 和 `rslidar_rear`。这些数值与 URDF 不能直接视为同一变换。驱动是否
-以 `ENABLE_TRANSFORM=ON` 构建、点云是否已在驱动内变换，以及变换目标 frame 的
-精确定义均为 **UNKNOWN**。
+Airy 驱动配置打印的通用 transform 与 M20 URDF 安装位置不一致，但参考构建缓存
+确认 `ENABLE_TRANSFORM=OFF`，因此它不作用于输出点。M20 主配置自行应用原始前
+Airy 到 `base_link` 的 `Ry(+pi/2)` 和 URDF 平移 `[0.32028,0,-0.013]`。
 
-此外，当前资料未包含前 Airy 单机 DIFOP 中 LiDAR 与内置 IMU 的工厂旋转/平移
-标定。启动日志只打印端口和通用变换，不打印该内部标定。迁移时必须保证点云和 IMU
-的坐标转换各执行一次，且最终坐标约定一致。
+前 Airy DIFOP 工厂标定为 LiDAR 到 IMU：
+`q_xyzw=[-0.703521,0.710655,-0.00485685,0.00199339]`、
+`t=[0.00425,0.00418,-0.00446]`。组合后的 `extrinsicRot/Trans` 位于
+`paramsM20.yaml`。实际驱动构建仍必须再次确认 `ENABLE_TRANSFORM=OFF`，并通过
+静止重力与已知运动验证组合方向。
 
 # 9. Configuration System（配置系统）
 
@@ -478,6 +489,7 @@ Airy 驱动配置却对前雷达设置 `[0.0501, 0, 0.739]`、pitch `+1.570795`�
 | 配置文件 | 用途 | RBF 主约束默认值 |
 | --- | --- | --- |
 | `LIO-SAM-MID360/config/paramsLivoxIMU.yaml` | Tron1A/MID360 六轴 IMU 主配置 | `true` |
+| `LIO-SAM-MID360/config/paramsM20.yaml` | M20/前 Airy 六轴 IMU 主配置 | `false`；由 launch 参数显式开启 |
 | `LIO-SAM-MID360/config/params9axisIMU.yaml` | 九轴 IMU 配置 | `false` |
 | `LIO-SAM-MID360/config/params.yaml` | 通用 MID360 配置 | `false` |
 | `rbf_cuda/config/params.yaml` | 旧版 Velodyne/独立 RBF 包配置 | 不包含主约束参数 |
@@ -490,13 +502,13 @@ Airy 驱动配置却对前雷达设置 `[0.0501, 0, 0.739]`、pitch `+1.570795`�
 | Topic | `pointCloudTopic`、`imuTopic`、`odomTopic`、`gpsTopic` | 所有主节点 |
 | Frame | `lidarFrame`、`baselinkFrame`、`odometryFrame`、`mapFrame` | 发布、TF、消息头 |
 | LiDAR | `sensor`、`N_SCAN`、`Horizon_SCAN`、距离范围 | `ImageProjection` |
-| IMU | `imuType`、噪声、偏置随机游走、重力、外参 | `imuConverter`、`IMUPreintegration` |
-| 点云变换 | `pointCloudTransformEnable/Rot/Trans` | `moveFromCustomMsg()` |
+| IMU | `imuType`、`imuFrequency`、噪声、偏置随机游走、重力、外参 | `imuConverter`、`IMUPreintegration` |
+| 点云变换 | `pointCloudTransformEnable/Rot/Trans` | `moveFromCustomMsg()`、`moveFromAiryMsg()` |
 | 特征 | `edgeThreshold`、`surfThreshold`、最少有效特征数 | `FeatureExtraction`、地图优化 |
 | 地图 | 体素尺寸、处理间隔、局部关键帧半径 | `mapOptimization` |
 | RBF 约束 | `enableRbfConstraint`、核宽、节点/点数限制 | `updateRbfLmConstraints()` |
 | 轮地残差 | `rbfWeightR1...R4`、截断阈值 | CPU 轮地梯度实现 |
-| 运动学 | `jointStateTopic`、`wheelRadius` | `JointStateWheelKinematics` |
+| 运动学 | `jointStateTopic`、`robotKinematicsModel`、`wheelRadius` | 两种 `RobotKinematicsModel` 实现 |
 | z 校准 | 初值、上下限、学习率、EMA、deadband | `mapOptimization`、`ImageProjection` |
 | 关键帧/回环 | 新增阈值、搜索半径、ICP fitness | `mapOptimization` |
 | 输出 | `savePCD*`、`saveTUMTrajectoryPath` | 地图服务、轨迹记录 |
@@ -506,6 +518,7 @@ Airy 驱动配置却对前雷达设置 `[0.0501, 0, 0.739]`、pitch `+1.570795`�
 | Launch | 加载配置 | 说明 |
 | --- | --- | --- |
 | `run_tron1a_all.launch` | `paramsLivoxIMU.yaml` | 历史综合入口；Tron1A 模型引用已失效 |
+| `run_m20.launch` | `paramsM20.yaml` | M20/Airy 当前入口 |
 | `run6axis.launch` | `paramsLivoxIMU.yaml` | 六轴 IMU，包含通用 robot state publisher |
 | `run9axis.launch` | `params9axisIMU.yaml` | 九轴 IMU |
 | `run.launch` | `params.yaml` | 通用入口，并启用 NavSat 模块 |
@@ -604,7 +617,7 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    L[Livox MID360 CustomMsg] --> T[点云固定变换 + 动态 z 偏移]
+    L[Livox CustomMsg / Front Airy PointCloud2] --> T[点云固定变换 + 动态 z 偏移]
     T --> Q[两帧扫描缓存]
     I[IMU] --> IC[imuConverter]
     IC --> D[扫描旋转去畸变]
@@ -617,7 +630,7 @@ flowchart TD
     G --> S[扫描到局部地图匹配]
     F --> S
 
-    J[/joint_states] --> K[Tron1A 两轮运动学]
+    J[/joint_states or /joint_states_m20] --> K[Tron1A 两轮 / M20 四轮运动学]
     K --> C[轮地接触点 + RBF 残差/Jacobian]
     M[局部平面地图点] --> C
     C --> LM[LOAM + 轮地约束六自由度 LM]
@@ -647,14 +660,14 @@ flowchart TD
 | 文件 | 主要类/函数 | 作用 | 被谁调用/启动 |
 | --- | --- | --- | --- |
 | `LIO-SAM-MID360/include/utility.h` | `ParamServer`、`imuConverter()` | 参数、外参、公共点云/IMU工具 | 四个主节点继承/调用 |
-| `LIO-SAM-MID360/src/imageProjection.cpp` | `ImageProjection`、`cloudHandler()` | Livox 转换、去畸变、距离图 | `lio_sam_imageProjection` |
+| `LIO-SAM-MID360/src/imageProjection.cpp` | `ImageProjection`、`livoxCloudHandler()`、`airyCloudHandler()` | Livox/Airy 转换、去畸变、距离图 | `lio_sam_imageProjection` |
 | `LIO-SAM-MID360/src/featureExtraction.cpp` | `FeatureExtraction`、`extractFeatures()` | LOAM 特征提取 | `lio_sam_featureExtraction` |
 | `LIO-SAM-MID360/src/mapOptmization.cpp` | `mapOptimization`、`scan2MapOptimization()` | 扫描匹配、因子图、地图、回环 | `lio_sam_mapOptmization` |
 | `LIO-SAM-MID360/src/mapOptmization.cpp` | `updateRbfLmConstraints()`、`LMOptimization()` | 将轮地约束注入最终位姿优化 | `scan2MapOptimization()` |
 | `LIO-SAM-MID360/src/imuPreintegration.cpp` | `IMUPreintegration` | GTSAM IMU 预积分 | `lio_sam_imuPreintegration` |
 | `LIO-SAM-MID360/src/imuPreintegration.cpp` | `TransformFusion` | 低频地图里程计与高频 IMU 融合 | 同一进程中的第二个对象 |
 | `LIO-SAM-MID360/include/rbf_lm_interface.h` | `RbfCudaRequest`、`RbfCudaGradientInterface` | 主 RBF/LM 抽象契约 | mapOptimization、CPU 实现 |
-| `LIO-SAM-MID360/src/rbf_wheel_kinematics.cpp` | `JointStateWheelKinematics` | 关节状态到两轮几何 | mapOptimization 构造 |
+| `LIO-SAM-MID360/src/rbf_wheel_kinematics.cpp` | `JointStateWheelKinematics`、`M20JointStateWheelKinematics` | 关节状态到两轮/四轮几何 | mapOptimization 按参数构造 |
 | `LIO-SAM-MID360/src/rbf_cuda_wheel_gradient.cpp` | `CudaWheelRbfGradient` | CPU 接触求解、残差和数值 Jacobian | `updateRbfLmConstraints()` |
 | `LIO-SAM-MID360/src/cuda/rbf_cuda_wheel_gradient.cu` | `ComputeWheelResidualJacobianCuda()` | CUDA 高度残差/Jacobian 核 | 当前调用者 **UNKNOWN/不存在** |
 | `rbf_cuda/include/rbf_fitting/rbf_fit.h` | `VoxelGridRBF` | ROI、中心管理、拟合和可视化封装 | elevation_rbf、debug_rbf、旧 lidar odometry |
@@ -662,10 +675,11 @@ flowchart TD
 | `rbf_cuda/src/rbf/elevation_rbf.cpp` | `odomCallback()` | 独立 RBF 拟合、发布和统计 | `cuda_rbf/elevation_rbf` |
 | `rbf_cuda/src/lio_sam/lidar_odometry.cpp` | `NDTOdometry` | 实验性局部地图/RBF 节点；NDT/ICP 主体已注释 | 仅旧 `rbf_cuda/run.launch` |
 | `LIO-SAM-MID360/scripts/joint_state_name_adapter.py` | `JointStateNameAdapter` | 通用关节名到 Tron1A 名称 | `with_robot_tf:=true` |
+| `LIO-SAM-MID360/scripts/m20_joint_state_adapter.py` | `M20JointStateAdapter` | `/JOINTS_DATA` 到 M20 URDF JointState | `run_m20.launch` |
 | `rbf_cuda/script/fk.py` | `ForwardKinematicsTFBroadcaster` | URDF 正运动学和轮 TF | `run_rbf.launch` |
 | `LIO-SAM-MID360/msg/cloud_info.msg` | 消息定义 | deskew、特征、初值和关键帧载体 | 三个点云主节点 |
-| `LIO-SAM-MID360/launch/run_tron1a_all.launch` | 综合启动配置 | 主程序入口 | `roslaunch` |
-| `robot-description/M20/urdf/M20.urdf` | M20 links/joints/limits | 四轮运动学和传感器安装参考 | 当前尚无主代码调用 |
+| `LIO-SAM-MID360/launch/run_m20.launch` | M20/Airy 综合启动配置 | 当前 M20 主程序入口 | `roslaunch` |
+| `robot-description/M20/urdf/M20.urdf` | M20 links/joints/limits | 四轮运动学和传感器安装参考 | M20 运动学常量与 robot_state_publisher |
 | `support/rslidar_ros2_ws/config/m20_airy.yaml` | 双 Airy 网络、topic、时间戳和驱动变换 | ROS 2 驱动参考配置 | 通过 `start.py` 的 `config_path` 加载 |
 | `support/rslidar_ros2_ws/src/rslidar_sdk/launch/start.py` | ROS 2 launch | 启动 SDK 节点和 RViz2 | `ros2 launch rslidar_sdk start.py` |
 
@@ -673,7 +687,7 @@ flowchart TD
 
 1. **UNKNOWN：实际构建状态。** 当前分析没有在 ROS Noetic、GTSAM、Livox 和 CUDA 环境中执行完整编译。
 2. **UNKNOWN：根 CMake 历史。** 根 `CMakeLists.txt` 很像被复制为普通文本的 Catkin 符号链接目标，但仓库无法证明其原始文件类型。
-3. **TODO：M20 输入尚未接入。** 测试 bag 和 Airy topics 已确认，但主点云入口仍只接受 Livox `CustomMsg`，关节入口仍是 Tron1A 两轮 `JointState`。
+3. **UNKNOWN：M20 运行验证。** 输入和四轮运动学已接入，但尚未在 Linux/ROS Noetic 中完整编译并回放测试 bag。
 4. **UNKNOWN：外部回环生产者。** 仓库订阅 `lio_loop/loop_closure_detection`，但不包含发布该话题的实现。
 5. **UNKNOWN：GPS 来源。** 仓库包含 NavSat launch 和 GPS 因子，但没有硬件驱动、datum 或数据集级配置。
 6. **TODO：主 RBF 地形语义。** 主求值器将局部地图点 `z` 当作高斯核系数，但这些点不是 `VoxelGridRBF` 输出的中心/权重。该行为是否为最终设计无法确认。
@@ -686,8 +700,8 @@ flowchart TD
 13. **UNKNOWN：实验精度复现。** 仓库已有接口测试 bag，但没有 ground truth、ATE/RTE 计算、轨迹对齐或论文绘图脚本。
 14. **TODO：硬编码路径。** 多个 launch 和脚本使用 `/root/...` 路径，未参数化的脚本不能直接移植。
 15. **TODO：辅助脚本安装。** `fk.py` 被 launch 直接引用，但 `rbf_cuda/CMakeLists.txt` 没有对应 `catkin_install_python()`；安装空间中的可发现性未经验证。
-16. **TODO：机器人描述构建与 launch。** `robot-description/CMakeLists.txt` 仍安装已经不存在的 `pointfoot/wheellegged`，且 `run_tron1a_all.launch` 仍引用已删除的 Tron1A URDF；M20 目录尚未接入安装和主 launch。
+16. **TODO：实机 ROS 版本边界。** `run_m20.launch` 是 ROS 1；Airy 参考驱动是 ROS 2，仓库仍没有已验证的在线 bridge 启动方案。
 17. **UNKNOWN：测试覆盖。** 当前仓库没有发现自动化单元测试、集成测试或 rosbag 回归测试。
-18. **UNKNOWN：Airy 内部 IMU 标定。** 当前配置和启动日志均未给出前 Airy DIFOP 中的 LiDAR-IMU 工厂旋转/平移参数。
-19. **UNKNOWN：驱动侧坐标变换是否生效。** 配置和日志打印了变换参数，但仓库缺少实际构建缓存/完整构建文件，不能确认 `ENABLE_TRANSFORM` 状态；其数值也与 M20 URDF 不一致。
+18. **TODO：Airy 外参现场复核。** DIFOP q/t 已接入，但组合外参仍需用静止重力、已知运动和地图方向在实机确认。
+19. **TODO：驱动变换责任边界。** 已提供构建缓存显示参考驱动 `ENABLE_TRANSFORM=OFF`；实际部署也必须保持关闭，避免与 `paramsM20.yaml` 重复变换。
 20. **TODO：真实 500 Hz 关节链。** `support/m20_udp_bridge.zip` 和测试 bag 只提供重复发布方案；GOS 直接 500 Hz 的最终消息生产者尚未进入仓库。

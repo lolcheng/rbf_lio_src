@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   cv_bridge
-  livox_ros_driver
   # pcl library
   pcl_conversions
   # msgs
@@ -21,6 +20,10 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   visualization_msgs
 )
+
+# Livox support is optional. M20/Airy only needs sensor_msgs/PointCloud2.
+find_package(livox_ros_driver QUIET)
+find_package(livox_ros_driver2 QUIET)
 
 find_package(OpenMP REQUIRED)
 find_package(PCL REQUIRED QUIET)
@@ -33,6 +36,7 @@ add_message_files(
   DIRECTORY msg
   FILES
   cloud_info.msg
+  M20JointsData.msg
 )
 
 add_service_files(
@@ -67,6 +71,8 @@ catkin_package(
 include_directories(
 	include
 	${catkin_INCLUDE_DIRS}
+	${livox_ros_driver_INCLUDE_DIRS}
+	${livox_ros_driver2_INCLUDE_DIRS}
 	${PCL_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 	${GTSAM_INCLUDE_DIR}
@@ -88,7 +94,7 @@ link_directories(
 # Range Image Projection
 add_executable(${PROJECT_NAME}_imageProjection src/imageProjection.cpp)
 add_dependencies(${PROJECT_NAME}_imageProjection ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
-target_link_libraries(${PROJECT_NAME}_imageProjection ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_imageProjection ${catkin_LIBRARIES} ${livox_ros_driver_LIBRARIES} ${livox_ros_driver2_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBRARIES})
 
 # Feature Association
 add_executable(${PROJECT_NAME}_featureExtraction src/featureExtraction.cpp)
@@ -117,5 +123,6 @@ target_link_libraries(${PROJECT_NAME}_imuPreintegration Boost::timer ${catkin_LI
 
 catkin_install_python(PROGRAMS
   scripts/joint_state_name_adapter.py
+  scripts/m20_joint_state_adapter.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

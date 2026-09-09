@@ -210,9 +210,25 @@ public:
         downSizeFilterSurroundingKeyPoses.setLeafSize(surroundingKeyframeDensity, surroundingKeyframeDensity, surroundingKeyframeDensity); // for surrounding key poses of scan-to-map optimization
 
         allocateMemory();
-        rbfGradientInterface = lio_sam_rbf::CreateCudaWheelRbfGradient(
-            std::unique_ptr<lio_sam_rbf::RobotKinematicsModel>(
-                new lio_sam_rbf::JointStateWheelKinematics(jointStateTopic, static_cast<float>(wheelRadius))));
+        std::unique_ptr<lio_sam_rbf::RobotKinematicsModel> kinematics;
+        if (robotKinematicsModel == "m20")
+        {
+            kinematics.reset(new lio_sam_rbf::M20JointStateWheelKinematics(
+                jointStateTopic, static_cast<float>(wheelRadius)));
+        }
+        else if (robotKinematicsModel == "tron1a")
+        {
+            kinematics.reset(new lio_sam_rbf::JointStateWheelKinematics(
+                jointStateTopic, static_cast<float>(wheelRadius)));
+        }
+        else
+        {
+            ROS_FATAL_STREAM("[lio_sam][rbf] unsupported robotKinematicsModel: "
+                             << robotKinematicsModel);
+            ros::shutdown();
+        }
+        rbfGradientInterface = lio_sam_rbf::CreateCudaWheelRbfGradient(std::move(kinematics));
+        ROS_INFO_STREAM("[lio_sam][rbf] robot kinematics model: " << robotKinematicsModel);
         lidarZOffsetAdaptive = std::min(std::max(lidarZInit, lidarZMin), lidarZMax);
         ROS_INFO_STREAM("[lio_sam] lidar z auto-calib: " << (enableLidarZCalibration ? "enabled" : "disabled")
                         << ", init=" << lidarZOffsetAdaptive

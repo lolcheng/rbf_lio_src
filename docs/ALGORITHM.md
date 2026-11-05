@@ -171,7 +171,13 @@ s_p=1-0.9\frac{|pd2|}{\sqrt{\sqrt{x_L^2+y_L^2+z_L^2}}}.
 | 加速度偏置随机游走 | `imuAccBiasN` | 同上 | `odometryHandler()` | Bias BetweenFactor sigma |
 | 陀螺偏置随机游走 | `imuGyrBiasN` | 同上 | `odometryHandler()` | Bias BetweenFactor sigma |
 | 重力 | `imuGravity` | 同上 | `MakeSharedU()`、`imuConverter()` | 预积分重力；六轴配置下也用于加速度单位转换 |
+| 加速度测量符号 | `imuAccelerationSign` | `utility.h` / `ParamServer` | `imuConverter()` | 单位转换后、外参旋转前乘以 `+1/-1`；M20/Airy 为 `+1` |
 | LiDAR/IMU 平移 | `extrinsicTrans` | 同上 | `lidar2Imu/imu2Lidar` | 校正 pose 与 IMU pose 转换 |
+
+M20 使用 `R_base_lidar=Rx(pi)*Ry(pi/2)` 并与 DIFOP 组合为 `extrinsicRot`。
+静止加速度经单位和正确外参转换后自然指向 `base_link +Z`，
+`imuAccelerationSign: +1`；首条约为 `[-0.501,0.073,9.775] m/s^2`。
+旧旋转配合 `-1` 只修正了加速度符号，却留下倒置点云和 Y/Z 角速度，现已撤销。
 
 ### 5.2 论文传播式 (30a-c)
 
@@ -417,17 +423,18 @@ u_j({}^O R_B;q)={}^O R_B g_j(q).
 | 16 个关节的轴、零位、限位与父子 link | `robot-description/M20/urdf/M20.urdf` | 运动学常量和 TF 模型来源 |
 | 四个轮心和轮轴 | `M20JointStateWheelKinematics::computeWheelGeometry()` | 已生成四个 `WheelGeometry` |
 | 轮半径 `rho` | M20 URDF collision geometry，`0.09 m` | `paramsM20.yaml::wheelRadius` |
-| 关节观测 | `/JOINTS_DATA` -> `m20_joint_state_adapter.py` -> `/joint_states_m20` | 暂按单位比例/零偏转换，比例与零偏均可配置 |
+| 关节观测 | `/JOINTS_DATA` -> `m20_joint_state_adapter.py` -> `/joint_states_m20` | 按厂家 SDK 方向/rad 零偏转换并归一化，再按动态 URDF 限位检查；只转换一次 |
 
-测试 bag 中若干关节值超出 URDF 限位，且约 500 Hz topic 主要由约 10 Hz 源样本
-重复组成。因此该数据只能用于验证解析器和时间队列，不能用于确认论文式 (25)-(28)
-在 M20 上的几何正确性。最终输入应由 GOS 直接提供真实 500 Hz 样本，并在进入
-运动学前转换成 URDF 关节约定。
+原始编码器角不能直接作为 URDF 关节角。按 `q=wrap_to_pi(s*q_raw+b)` 转换后，
+测试 bag 的 8258 条消息全部符合本地 URDF 限位，起始轮心位于机体下方并与所给
+站姿外观相符。方向/零偏表及来源见 [交接文档 4.3](HANDOFF_UBUNTU.md#编码器到-urdf-的转换2026-11-05)。
+约 500 Hz topic 仍主要由约 10 Hz 源样本重复组成；代码保留源时间戳并使用最新
+关节观测，不新增插值或逐轮触地判断。无轨迹真值，不能由回放推出定位精度。
 
 前 Airy DIFOP 标定已取得。`paramsM20.yaml` 使用 `P_imu = R_imu_lidar P_lidar +
 t_imu_lidar` 的方向，将 q/t 与前 LiDAR 到 `base_link` 变换组合为 `extrinsicRot`
-和 `extrinsicTrans`。该组合已通过矩阵正交性和测试 bag 静止重力方向离线检查，仍需
-ROS 回放及实机运动验证。
+和 `extrinsicTrans`。该组合及 `imuAccelerationSign` 已通过矩阵正交性、测试 bag
+静止起始段和完整 ROS 回放检查，仍需实机已知运动验证。
 
 ## 10. 轮地 manifold residuals
 
@@ -628,15 +635,15 @@ RBF residual 没有独立 factor 类型。它先改变当前扫描匹配结果�
 | --- | --- | --- | --- |
 | (1) | 基座位姿 `R,t` | `transformTobeMapped`、GTSAM `Pose3` | 概念对应；坐标帧需结合配置 |
 | (5) | 单值地形 `p_z=f(x;w)` | `evaluateTerrain()`、`VoxelGridRBF` | 对应 |
-| (6) | 多轮接触点集合 | 局部 `p`，每次遍历两个 `WheelGeometry` | 只实现两轮；接触点不持久化 |
+| (6) | 多轮接触点集合 | 局部 `p`，遍历平台返回的 `WheelGeometry` 向量 | Tron1A 两轮/M20 四轮；接触点不持久化 |
 | (7) | `Jscan + JM` 联合目标 | `LMOptimization()` 拼接 LiDAR/RBF 行 | 位姿 cost 对应；没有联合接触点变量 |
 | (8) | RBF 加权和 | 两套 Gaussian 求值器 | 形式对应，权重来源不同 |
 | (9) | Gaussian kernel | `evaluateTerrain()`、`calKernelMatrixKernel` | 代码扩展为各向异性带宽 |
 | (14)-(16) | moment/least-squares 权重估计 | 无可确认的 `m(x)` 实现 | **UNKNOWN/未完整实现** |
 | (17)-(18) | ridge regression | `initialWeightKernel()` | 普通 ridge 对应；缺少式 (15) 噪声修正核 |
 | (19)-(24) | 活跃块递归权重更新 | `updateWeightCuda()`、`updateWeightKernel()` | 结构近似；活动运行链未调用，精确等价 **UNKNOWN** |
-| (25) | 轮心正运动学 | `computeWheelCenterBase()`、`computeWheelGeometry()` | 两轮对应 |
-| (26) | 轮轴正运动学 | `computeWheelAxisBase()` | 两轮对应 |
+| (25) | 轮心正运动学 | `computeWheelCenterBase()`、`computeWheelGeometry()` | Tron1A 两轮与 M20 四轮对应 |
+| (26) | 轮轴正运动学 | `computeWheelAxisBase()` | Tron1A 两轮与 M20 四轮对应 |
 | (27a) | 接触点位于地形 | `rHeight` / `r1` | 对应，带截断 |
 | (27b) | 接触点位于轮平面 | `axis_world.dot(p-center)` | 对应，带截断 |
 | (27c) | 轮半径约束 | `squaredNorm-rho^2` | 对应，带截断 |
@@ -696,7 +703,11 @@ RBF residual 没有独立 factor 类型。它先改变当前扫描匹配结果�
 12. **UNKNOWN**：LiDAR 点线/点面启发式权重 `s` 的概率意义。
 13. **UNKNOWN**：残差截断阈值和 `rbfWeightR*` 的标定依据。
 14. **UNKNOWN**：论文实验参数与当前 YAML/节点默认参数不一致的原因。
-15. **UNKNOWN**：仓库没有数值梯度检查、解析 Jacobian 对比或 rosbag 回归测试，无法仅从静态代码确认估计器的数值正确性。
-16. **UNKNOWN**：M20 APDU 关节角到 URDF joint variable 的符号、零偏和顺序转换；测试 bag 中存在超限值，不能仅凭变量名推断。
-17. **TODO**：前 Airy DIFOP 与 URDF 组合外参尚未通过完整 ROS 回放和实机轨迹验收。
-18. **TODO**：M20 四轮运动学已接入，但尚无基于独立 URDF FK 实现的自动数值回归测试。
+15. **UNKNOWN**：仓库已有 URDF 限位单元测试和一次手工 rosbag 回放记录，但没有
+    数值梯度检查、解析 Jacobian 对比或自动 rosbag 回归测试，仍不能确认估计器的
+    数值正确性。
+16. **已接入**：M20 编码器方向/零偏采用厂家 SDK 约定，现有 bag 转换后无需截断；SDK 与该 APDU 固件的版本对应关系尚无厂家记录，更换数据源需复核。
+17. **TODO**：前 Airy DIFOP、URDF 组合外参及加速度符号已通过测试 bag 完整 ROS
+    回放，但尚未通过实机已知运动和轨迹精度验收。
+18. **TODO**：M20 四轮运动学已有零位几何、URDF 限位截断和 12 组
+    确定性关节姿态的独立 URDF 链 FK 自动对照，仍缺实机尺寸/姿态测量验收。

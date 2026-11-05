@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   geometry_msgs
   nav_msgs
+  urdf
   message_generation
   visualization_msgs
 )
@@ -62,6 +63,7 @@ catkin_package(
   nav_msgs
   geometry_msgs
   sensor_msgs
+  urdf
   message_runtime
   message_generation
   visualization_msgs
@@ -126,3 +128,15 @@ catkin_install_python(PROGRAMS
   scripts/m20_joint_state_adapter.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+if(CATKIN_ENABLE_TESTING)
+  catkin_add_nosetests(test/test_m20_joint_state_adapter.py)
+  catkin_add_nosetests(test/test_m20_sensor_frames.py)
+  find_package(rostest REQUIRED)
+  add_rostest_gtest(test_m20_wheel_kinematics
+    test/test_m20_wheel_kinematics.test
+    test/test_m20_wheel_kinematics.cpp
+    src/rbf_wheel_kinematics.cpp
+  )
+  target_link_libraries(test_m20_wheel_kinematics ${catkin_LIBRARIES})
+endif()

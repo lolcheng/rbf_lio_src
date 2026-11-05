@@ -4,7 +4,15 @@
 
 > 重要边界：本文记录的是当前软件接口，不证明某一具体实机组合已经完成标定或现场验证。任何外参、topic、关节顺序和时间同步值都必须在目标机器人上核对。
 
-> M20 状态：Airy 驱动接口、测试 bag 和前 Airy DIFOP q/t 已取得，主代码已增加 PointCloud2、六轴 IMU 和 M20 四轮运动学入口。尚未完成 Linux/ROS 编译、整包回放、实机轨迹验收、ROS 1/ROS 2 在线桥接和 GOS 原生 500 Hz 关节链。
+> M20 状态：Airy 驱动接口、测试 bag 和前 Airy DIFOP q/t 已取得，主代码已增加
+> PointCloud2、六轴 IMU 和 M20 四轮运动学入口。2026-09-09 已完成 Ubuntu/ROS
+> 全量编译和测试 bag 的 RBF 开/关回放；尚未完成实机轨迹/精度验收、ROS 1/ROS 2
+> 在线桥接和 GOS 原生 500 Hz 关节链。
+
+当前工作范围是工作站离线回放：已有 ROS 1 bag 无需驱动或在线桥接。
+2026-11-05 已接入厂家 SDK 编码器方向/零偏转换，整包转换后均符合本地 URDF
+限位。转换表及证据边界见 [交接文档 4.3](HANDOFF_UBUNTU.md#编码器到-urdf-的转换2026-11-05)。
+本文的在线采集条目不作为离线运行前提。
 
 # 1. Supported Hardware
 
@@ -25,10 +33,13 @@
 
 | 模式 | 当前配置 | 输入 | 代码行为 |
 |---|---|---|---|
-| 六轴 IMU | `imuType: 0`，`paramsLivoxIMU.yaml` | `sensor_msgs/Imu` | 加速度先乘 `imuGravity`，再用 `extrinsicRot` 旋转；姿态被设为固定的 `extQRPY` |
-| 九轴 IMU | `imuType: 1`，`params9axisIMU.yaml` | `sensor_msgs/Imu` | 加速度和角速度用 `extrinsicRot` 旋转；输入姿态与 `extQRPY` 相乘 |
+| 六轴 IMU | `imuType: 0`，`paramsLivoxIMU.yaml` | `sensor_msgs/Imu` | 加速度先乘 `imuGravity`、再乘 `imuAccelerationSign`，随后用 `extrinsicRot` 旋转；姿态被设为固定的 `extQRPY` |
+| 九轴 IMU | `imuType: 1`，`params9axisIMU.yaml` | `sensor_msgs/Imu` | 加速度乘 `imuAccelerationSign` 后与角速度一起用 `extrinsicRot` 旋转；输入姿态与 `extQRPY` 相乘 |
 
-`imuType: 0` 会把输入线加速度从 `g` 乘为 `m/s^2`。M20 测试 bag 的前 Airy IMU 已确认是约 `1 g` 量级且 orientation 未填充，因此 `paramsM20.yaml` 使用该模式；其他六轴 IMU 不能未经核对直接沿用。
+`imuType: 0` 会把输入线加速度从 `g` 乘为 `m/s^2`。M20 测试 bag 的前 Airy
+IMU 已确认是约 `1 g` 量级且 orientation 未填充，因此 `paramsM20.yaml` 使用该
+模式，并以正确的三维外参和 `imuAccelerationSign: +1` 转为 GTSAM 所需的
+specific-force 符号；其他 IMU 默认 `+1`，不能未经核对直接沿用 M20 设置。
 
 九轴配置存在，但具体 IMU 型号、驱动、安装方向和实机验证状态均为 **UNKNOWN**。
 
@@ -58,7 +69,8 @@
 - 运动学尺寸被写在 `LIO-SAM-MID360/src/rbf_wheel_kinematics.cpp` 中。它是历史 Tron1A 几何；对应的模型文件已从当前 `robot-description` 删除，现只能从代码确认这些常量。
 - 默认轮半径由 `paramsLivoxIMU.yaml` 的 `wheelRadius: 0.127` 给出。
 - `M20JointStateWheelKinematics` 接收 `/joint_states_m20` 的 12 个 hip/knee 位置，按 M20 URDF 的 `-X/-Y/-Y` 关节轴计算四个轮心和轮轴。
-- `m20_joint_state_adapter.py` 把 `/JOINTS_DATA` 转为 16 关节 `sensor_msgs/JointState`；12 个腿关节默认使用单位比例、零偏 0，轮角仅由非重复的新源样本轮速积分。
+- `m20_joint_state_adapter.py` 把 `/JOINTS_DATA` 转为 16 关节 `sensor_msgs/JointState`；12 个腿关节按 `paramsM20.yaml` 的厂家方向/rad 零偏转换、归一化，再检查 `/robot_description` 限位；轮速方向为 `[1,-1,1,-1]`，轮角仅由非重复的新源样本积分。
+- `M20JointStateWheelKinematics` 也从 `/robot_description` 读取同一组限位，对绕过适配器的直接 `JointState` 输入执行防御性截断。
 
 该模块不是一个独立的 wheel odometry 或 leg odometry 节点。它没有订阅轮速里程计，也不发布运动学里程计；它使用最新关节位置计算左右轮心和轮轴，供主 LM 的轮地接触残差使用。轮关节角 `q3/q7` 被读入，但当前轮心/轮轴计算不使用轮转角。
 
@@ -220,21 +232,24 @@ pointCloudRot: [1, 0, 0,
 
 M20/Airy 不沿用上述 MID360 外参。前 Airy DIFOP 的 LiDAR 到 IMU 标定为
 `q_xyzw=[-0.703521,0.710655,-0.00485685,0.00199339]`、
-`t=[0.00425,0.00418,-0.00446]`。以 `R_base_lidar=Ry(+pi/2)` 和 URDF
+`t=[0.00425,0.00418,-0.00446]`。以 `R_base_lidar=Rx(pi)*Ry(pi/2)` 和 URDF
 `t_base_lidar=[0.32028,0,-0.013]` 组合后，当前配置为：
 
 ```yaml
 extrinsicRot: [0.009667018, -0.004098306, -0.999944875,
-               -0.999902180, 0.010069117, -0.009707874,
-               0.010108348, 0.999940907, -0.004000567]
-extrinsicTrans: [0.315796292, 0.004164198, -0.017240556]
+               0.999902180, -0.010069117, 0.009707874,
+               -0.010108348, -0.999940907, 0.004000567]
+extrinsicTrans: [0.315796292, -0.004164198, -0.008759444]
 pointCloudRot: [0, 0, 1,
-                0, 1, 0,
-               -1, 0, 0]
+                0, -1, 0,
+                1, 0, 0]
 pointCloudTrans: [0.32028, 0, -0.013]
+imuAccelerationSign: 1.0
 ```
 
-这些值已通过旋转矩阵正交性和测试 bag 静止重力方向离线检查，但尚未完成实机轨迹验收。
+该旋转将原始 `X<0` 的起始地面置于机体下方，并使动态 IMU 轴向与机体运动
+方向一致。旧 `Ry(pi/2)` 和加速度反号组合会倒置点云、反转 Y/Z 角速度，已撤销。
+当前值已通过刚体变换、静止地面/加速度和整包回放检查，尚无轨迹精度真值。
 
 # 4. Sensor Configuration
 
@@ -277,6 +292,7 @@ pointCloudTrans: [0.32028, 0, -0.013]
 `paramsLivoxIMU.yaml` 当前设置：
 
 - `imuType: 0`
+- `imuAccelerationSign: +1`（未显式设置时的默认值）
 - `imuAccNoise: 1.0e-04`
 - `imuGyrNoise: 1.0e-04`
 - `imuAccBiasN: 1.0e-04`
@@ -288,6 +304,7 @@ pointCloudTrans: [0.32028, 0, -0.013]
 - `failureDetectionGyrBiasTh: 1.0`
 
 噪声参数的测量或标定来源为 **UNKNOWN**。README 只说明出现 IMU 里程计抖动时需要调节这些参数。
+M20 覆盖为 `imuFrequency: 200` 和 `imuAccelerationSign: +1`；符号参数只接受 `+1/-1`。
 
 ## 4.4 已确认的 Airy 驱动配置
 
@@ -384,7 +401,10 @@ roslaunch lio_sam run_m20.launch \
   tum_trajectory_path:=/absolute/output/m20_trajectory_tum.txt
 ```
 
-来源：`LIO-SAM-MID360/launch/run_m20.launch`。当前测试 bag 的关节值未经 URDF 一致性验证，因此 launch 默认 `enable_rbf_constraint:=false`。换用 GOS 原生 500 Hz 数据并验证关节方向/零位后，传入 `enable_rbf_constraint:=true` 才会启用主轮地约束。
+来源：`LIO-SAM-MID360/launch/run_m20.launch`。默认关闭 RBF 以保留基础 LIO
+对照；现有 bag 已配置编码器到 URDF 的转换，可传入 `enable_rbf_constraint:=true`
+比较四轮约束的轨迹、残差和地图。其约 10 Hz 源数据的重复发布不会提供额外
+独立观测，且 bag 无精度真值。
 
 测试 bag 回放需传入 `use_sim_time:=true` 并使用 `rosbag play --clock`；实机保持默认的 `use_sim_time:=false`。实机驱动为 ROS 2 时，必须先通过仓库外的 ROS 1/ROS 2 bridge 让三个输入 topic 在 ROS 1 master 可见；具体 bridge 命令仍为 **UNKNOWN**。
 
@@ -403,17 +423,28 @@ roslaunch lio_sam run_m20.launch \
   rbf_file_path:=/absolute/output/rbf_stats
 ```
 
-`with_rbf:=true` 还会启动 `rbf_cuda/script/fk.py`。该脚本的默认 URDF 路径是 `/root/code/robot-description/pointfoot/WF_TRON1A/urdf/robot.urdf`，而 `run_rbf.launch` 没有覆盖它；目标机器若不存在该路径，脚本无法按默认值部署。如何在现有综合 launch 中提供可移植路径为 **TODO / 当前未配置**。
+M20 的 `with_rbf_visualization:=true` 只启动 `cuda_rbf/elevation_rbf`，不会启动
+`rbf_cuda/script/fk.py`。只有历史 Tron1A 的 `with_rbf:=true` / `run_rbf.launch`
+会启动该脚本；其默认 URDF 路径仍是不可移植的 `/root/code/...`，但不属于 M20
+运行入口。
+
+`elevation_rbf` 会递归创建 `file_path` 统计目录；节点和 `run_rbf.launch`
+的默认值均为 `/tmp/rbf_lio_rbf`。2026-09-09 回放已确认实际 CUDA 求解、
+18 帧有限高程图和三份各 18 行的有限统计。
 
 此外，`fk.py` 只把输入中的 `joint_0` 至 `joint_7` 映射为 Tron1A 关节名；如果 `/joint_states` 已经使用 `abad_L_Joint` 等具名关节，该脚本不会把这些位置加入其 FK 输入。该 TF 可视化脚本不参与主 `JointStateWheelKinematics` 的轮地约束计算。
 
 ## 5.4 可选机器人 TF 与 RViz
 
 - `with_rviz:=true` 启动 `module_rviz.launch` 中的 RViz 配置。
-- `with_robot_tf:=true` 启动关节名适配器和 `robot_state_publisher`。
-- 关节名适配器默认把 `/joint_states` 复制到 `/joint_states_tron1a`，将 `joint_0..7` 改为 Tron1A 名称，并把时间戳刷新为 `ros::Time::now()`。
-- 主 RBF 运动学仍直接订阅原始 `/joint_states`，不订阅 `/joint_states_tron1a`。
-- 启用机器人 TF 前必须处理第 3.2 节中的 `base_link` / `base_Link` 图断开问题；仓库没有现成修复参数。
+- 历史 Tron1A 的 `with_robot_tf:=true` 启动名称适配器和
+  `robot_state_publisher`；名称适配器把 `/joint_states` 复制到
+  `/joint_states_tron1a`，而主 RBF 运动学仍直接订阅原始 `/joint_states`。
+- M20 的 `with_robot_tf:=true` 直接把 `/joint_states_m20` remap 给
+  `robot_state_publisher`，且 `robot_description` 在关节适配器和主节点启动前
+  加载，不使用 Tron1A 名称适配器。
+- 历史 Tron1A 的 `base_link` / `base_Link` 图断开问题不适用于当前 M20 URDF；
+  两种模型的 TF 树仍应分别检查。
 
 # 6. Runtime Outputs
 
@@ -516,7 +547,7 @@ M20 迁移还必须以 `robot-description/M20/urdf/M20.urdf` 为准核对 16 个
 - 建议在关闭 `enableLidarZCalibration` 时先验证静态外参，避免动态偏移掩盖错误安装变换。
 - 建议先确认 `/joint_states` 的角度单位、正方向和左右顺序，再启用 `enableRbfConstraint`。
 - 建议分别记录开启/关闭 RBF 约束的轨迹，确认约束确实进入 LM，而不是因缺少关节数据被跳过。
-- 建议在生产部署中覆盖所有 `/root/...` 输出路径，并限制地图保存目标，防止删除非实验目录。
+- 建议在生产部署中覆盖历史入口中的 `/root/...` 输出路径，并限制地图保存目标，防止删除非实验目录。
 - 建议首先关闭驱动侧或 RBF-LIO 侧其中一处点云刚体变换，用静态目标确认只有一处负责 `Airy -> base_link`，再启用完整估计。
 
 # 8. Time Synchronization
@@ -581,16 +612,16 @@ IMU 预积分使用相邻 `sensor_msgs/Imu.header.stamp` 的差值作为 `dt`。
 | IMU 加速度量级约 9.8 倍错误 | 核对 `imuType: 0` 的输入单位是否确实为 `g` | `imuConverter()` |
 | IMU 里程计频繁重置 | 检查速度与 bias 是否超过 `failureDetection*`；再核对噪声、时间戳和单位 | `IMUPreintegration::failureDetection()`、YAML |
 | 特征或局部地图为空 | 检查距离过滤、ring 是否落在 `[0,N_SCAN)`、`Horizon_SCAN` 容量、特征阈值和体素尺寸 | `imageProjection.cpp`、`featureExtraction.cpp`、YAML |
-| RBF 约束持续跳过 | 检查 `enableRbfConstraint`、至少 8 个关节位置、`rbfNodeMaxNum`、局部面地图和日志中的 `[lio_sam][rbf-lm][skip]` | `mapOptmization::updateRbfLmConstraints()`、`rbf_wheel_kinematics.cpp` |
+| RBF 约束持续跳过 | 检查 `enableRbfConstraint`、Tron1A 至少 8 个或 M20 至少 12 个腿关节位置、`rbfNodeMaxNum`、局部面地图和日志中的 `[lio_sam][rbf-lm][skip]` | `mapOptmization::updateRbfLmConstraints()`、`rbf_wheel_kinematics.cpp` |
 | 历史 launch 报 URDF 文件不存在 | `run_tron1a_all.launch` 仍指向已删除的 Tron1A 文件；M20 应使用 `run_m20.launch` | 两个 launch、`robot-description/M20` |
 | `fk.py` 启动失败或轮 TF 不随关节变化 | 检查硬编码 `/root/code/robot-description/.../robot.urdf`、Python 依赖，以及输入名称是否为脚本实际处理的 `joint_0..7` | `rbf_cuda/script/fk.py` |
-| `/rbf_elevation_map` 不更新 | 确认 `with_rbf=true`、`map_local` 和 mapping incremental odometry 非空；节点需平面移动超过 `0.5 m` 才触发后续更新 | `run_rbf.launch`、`elevation_rbf.cpp` |
+| `/rbf_elevation_map` 不更新 | M20 检查 `with_rbf_visualization=true`，历史入口检查 `with_rbf=true`；同时确认 `map_local` 和 mapping incremental odometry 非空，节点需平面移动超过 `0.5 m` 才触发后续更新 | `run_m20.launch`、`run_rbf.launch`、`elevation_rbf.cpp` |
 | GPS 因子未使用 | 检查实际是否有 `nav_msgs/Odometry` 发布到 `odometry/gpsz`；仓库 navsat 链默认名称不匹配 | `paramsLivoxIMU.yaml`、`module_navsat.launch` |
 | TUM 文件不存在 | 父目录必须预先存在；检查 launch 覆盖路径和启动日志中的打开失败警告 | `mapOptimization` 构造函数 |
 | 保存地图误删目录 | `destination` 会拼到 `$HOME`，保存函数先执行递归删除 | `mapOptimization::saveMapService()` |
-| Airy 点云方向/高度明显错误 | 对比驱动 transform 与 M20 URDF；确认 `ENABLE_TRANSFORM`，排除驱动和主代码重复变换 | Airy config、M20 URDF、`moveFromCustomMsg()` |
-| Airy 点云与 IMU去畸变方向不一致 | 核对 DIFOP q/t 的方向、组合矩阵、驱动是否旋转 IMU，以及静止重力在 `base_link` 是否主要为 `-Z` | `paramsM20.yaml`、Airy wrapper、`imuConverter()` |
-| M20 关节几何跳变或越界 | 检查 `source_sequence/repeated/source_age`，并对每个 APDU 值执行 URDF 符号/零偏/限位验证 | `support/m20_udp_bridge.zip`、M20 URDF |
+| Airy 点云方向/高度明显错误 | 对比驱动 transform 与 M20 URDF；确认 `ENABLE_TRANSFORM`，排除驱动和主代码重复变换 | Airy config、M20 URDF、`moveFromAiryMsg()` |
+| Airy 点云与 IMU 去畸变方向不一致 | 核对 DIFOP q/t 的方向、组合矩阵、驱动是否旋转 IMU 及 `imuAccelerationSign`；送入 GTSAM 的静止 specific force 在 `base_link` 应主要为 `+Z` | `paramsM20.yaml`、Airy wrapper、`imuConverter()` |
+| M20 关节几何跳变或频繁限位截断 | 检查 `source_sequence/repeated/source_age` 和截断警告，并对每个 APDU 值执行 URDF 符号/零偏/顺序验证；不要把截断当作标定 | M20 适配器、M20 URDF |
 | ROS 2 Airy topic 在 ROS 1 不可见 | 检查实际 ROS 1/ROS 2 桥接或将输入层移植到 ROS 2；仓库当前无已确认桥 | Airy ROS 2 snapshot、主 ROS 1 package |
 
 # 10. Deployment Checklist
@@ -601,9 +632,11 @@ IMU 预积分使用相邻 `sensor_msgs/Imu.header.stamp` 的差值作为 `dt`。
 - [x] 已取得包含前/后点云、前/后 IMU 和 M20 测试消息的 rosbag。
 - [x] 已取得前 Airy DIFOP LiDAR-IMU 工厂旋转/平移标定并写入组合外参。
 - [x] 参考驱动构建缓存确认 `ENABLE_TRANSFORM=OFF`；实际部署仍须再次确认。
-- [ ] 已选择并实现 ROS 1/ROS 2 数据边界。
-- [ ] 已用 GOS 原生真实 500 Hz `/JOINTS_DATA` 替换测试重复发布数据。
-- [ ] 已建立 APDU 到 URDF joint 的符号、零位、顺序和限位转换测试。
+- [x] Ubuntu 20.04/ROS Noetic 上三个包全量构建及测试 bag 开/关 RBF 回放通过。
+- [x] 测试接口中的腿关节在进入 TF/四轮运动学前按动态 URDF 限位截断。
+- [ ] 可选在线采集：已选择并实现 ROS 1/ROS 2 数据边界。
+- [ ] 可选数据源改进：已用 GOS 原生真实 500 Hz `/JOINTS_DATA` 替换重复发布数据。
+- [x] 已建立编码器到 URDF joint 的符号、零位、归一化、顺序和限位转换测试。
 
 ## 10.1 传感器与标定
 
@@ -615,7 +648,7 @@ IMU 预积分使用相邻 `sensor_msgs/Imu.header.stamp` 的差值作为 `dt`。
 - [ ] 已在目标机器人上验证 `extrinsicRot`、`extrinsicRPY`、`extrinsicTrans`。
 - [ ] 已验证 `pointCloudRot`、`pointCloudTrans` 与 IMU 外参使用同一目标 frame。
 - [ ] 已确认 LiDAR/IMU 时间覆盖满足每帧去畸变要求；软件没有时间偏移参数。
-- [ ] M20 已确认 `/joint_states_m20` 的 12 个腿关节位置符合 URDF 方向、零位和限位。
+- [x] 当前 M20 bag 已按厂家 SDK 约定转换为 URDF 坐标，起始站姿及整包限位已核对；更换固件或数据源时重新核对。
 - [x] M20 轮半径和四腿几何常量已按 `M20.urdf` 接入。
 
 ## 10.2 ROS 与 TF
@@ -630,7 +663,7 @@ IMU 预积分使用相邻 `sensor_msgs/Imu.header.stamp` 的差值作为 `dt`。
 
 ## 10.3 启动与健康检查
 
-- [ ] 已创建 TUM 和 RBF 统计输出目录，并覆盖 launch 的 `/root/...` 默认路径。
+- [ ] 已创建 TUM 和 RBF 统计输出目录，并覆盖所使用的历史 launch 中 `/root/...` 默认路径。
 - [ ] M20 已启动 `run_m20.launch`，四个 LIO 核心节点及关节适配器均持续运行。
 - [ ] 去畸变点云、角点、面点和 `map_local` 均非空。
 - [ ] `lio_sam/mapping/odometry` 与 `odometry/imu` 连续发布，时间戳单调且数值有限。

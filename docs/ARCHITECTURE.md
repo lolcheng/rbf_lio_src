@@ -45,10 +45,21 @@ M20/Airy 已接入主运行链，当前状态如下：
 - `support/m20_udp_bridge.zip` 是临时测试桥。当前 bag 中 `/JOINTS_DATA` 虽约为 500 Hz，但仅约 10 Hz 的源样本有效更新，其余为重复发布；最终接口要求由 GOS 直接提供真实 500 Hz 数据。
 - `ImageProjection::airyCloudHandler()` 校验 `x/y/z/intensity/ring/timestamp` 字段，把绝对逐点时间转换为相对扫描时间，并按 96 个 ring 组织距离图。
 - `m20_joint_state_adapter.py` 将与本地 `M20JointsData.msg` 具有相同 ROS 1 MD5 的 `/JOINTS_DATA` 转为 `/joint_states_m20`。测试桥消息与本地消息的 MD5 均为 `fb86770770e356b2075846629adc617b`。
+- 适配器和 `M20JointStateWheelKinematics` 都从 `/robot_description` 读取腿关节
+  限位；适配器先按 M20 YAML 的厂家 SDK 方向/rad 零偏转换并归一化，再检查限位。
+  C++ 接收已转换的 URDF 坐标，不重复转换。现有 bag 转换后全部无需截断。
 - `M20JointStateWheelKinematics` 按 M20 URDF 的四条关节链生成四个 `WheelGeometry`，由 `robotKinematicsModel: m20` 选择。
 - 前 Airy DIFOP 已给出 LiDAR 到 IMU 标定：`q_xyzw=[-0.703521,0.710655,-0.00485685,0.00199339]`、`t=[0.00425,0.00418,-0.00446]`。`paramsM20.yaml` 将其与前 LiDAR 安装变换组合为 IMU 到 `base_link` 的向量旋转和平移。
+- Airy 原始轴按 `Rx(pi)*Ry(pi/2)` 转入 base，并与 DIFOP 组合 IMU 外参。
+  `imuAccelerationSign: +1`，静止 specific force 为 +Z，地面位于机体下方。
 
-尚未完成的是 Linux/ROS 实编译、整包回放、实机轨迹验收、ROS 1/ROS 2 在线桥接，以及最终 GOS 原生 500 Hz 关节接口。
+2026-09-09 已在 Ubuntu 20.04/ROS Noetic 上完成三个包全量编译及测试 bag 的
+RBF 开/关回放。开启时四轮约束稳定生成 24 行，主要输出均为有限值。尚未完成的
+是实机轨迹/精度验收、ROS 1/ROS 2 在线桥接，以及最终 GOS 原生 500 Hz 关节接口。
+当前目标为工作站 ROS 1 bag 离线运行，在线桥接和采集接口不是前提。
+2026-11-05 的编码器转换依据与站姿检查见 [交接文档 4.3](HANDOFF_UBUNTU.md#编码器到-urdf-的转换2026-11-05)。
+独立 `elevation_rbf` 同期完成了 GPU 运行验证：CUDA 核矩阵/权重求解实际执行，
+发布 18 帧每帧 360,000 点的有限高程图，并写出三份各 18 行的有限统计。
 
 # 2. Repository Structure（仓库结构）
 
@@ -148,7 +159,6 @@ source devel/setup.bash
 | 并行 | OpenMP、Boost timer | 地图优化并行和计时 |
 | LiDAR | `livox_ros_driver` | `CustomMsg` 编译依赖 |
 | GPU | CUDA Toolkit、Thrust、cuBLAS、cuSOLVER | 独立 RBF 核矩阵和权重求解 |
-| JSON | `nlohmann_json` | `elevation_rbf` 序列化代码；实际 JSON 写入被 `if (false)` 禁用 |
 | 导航 | `robot_localization` | `module_navsat.launch` 中的 EKF/NavSat 节点 |
 | Python | `urdfpy`、NumPy、`tf_conversions` | `rbf_cuda/script/fk.py` |
 | Python | `rosbag`、`pyproj`、`tqdm` | `rbf_cuda/script/gps2tum.py` |
@@ -259,9 +269,9 @@ GPS 原始接收机、关节硬件驱动和外部回环提示生产者不在仓�
 
 | 输入 | 已确认接口 | 测试数据特征 | 当前主代码状态 |
 | --- | --- | --- | --- |
-| 前 Airy 点云 | `/rslidar_points_front`, `sensor_msgs/PointCloud2` | 约 10 Hz；96 rings；字段 `x/y/z/intensity/ring/timestamp`；每点时间为绝对时间 | `airyCloudHandler()` 已接入；转换、去畸变和距离图待 ROS 回放验证 |
-| 前 Airy IMU | `/rslidar_imu_data_front`, `sensor_msgs/Imu` | 约 200 Hz；orientation 未提供；加速度量级约 `1 g` | 已由 `imuType: 0` 和组合 DIFOP 外参接入 |
-| M20 关节 | `/JOINTS_DATA`, M20 自定义消息 | 表面约 500 Hz；测试桥实际约 10 Hz 新样本并重复发布；若干关节值超出 URDF 限位 | 适配器发布 `/joint_states_m20`，四轮运动学已接入；角值约定仍待实机验证 |
+| 前 Airy 点云 | `/rslidar_points_front`, `sensor_msgs/PointCloud2` | 约 10 Hz；96 rings；字段 `x/y/z/intensity/ring/timestamp`；每点时间为绝对时间 | `airyCloudHandler()` 已接入；测试 bag 回放得到 162 帧非空去畸变输出 |
+| 前 Airy IMU | `/rslidar_imu_data_front`, `sensor_msgs/Imu` | 约 200 Hz；orientation 未提供；加速度量级约 `1 g` | `imuType: 0` 转换单位，`imuAccelerationSign: +1`，按修正后的点云轴向组合 DIFOP 外参；已回放验证 |
+| M20 关节 | `/JOINTS_DATA`, M20 自定义消息 | 表面约 500 Hz；测试桥实际约 10 Hz 新样本并重复发布；原始角采用编码器坐标 | 适配器按厂家方向/零偏转换、归一化和检查 URDF 限位后发布 `/joint_states_m20`；现有 bag 无需截断，四轮约束生成 24 行 |
 | 后 Airy 点云/IMU | 对应 `_rear` topic | bag 中存在 | 第一阶段明确不使用 |
 
 `/IMU` 机体自定义消息在测试 bag 中存在，但其有效更新频率同样约 10 Hz，且字段是
@@ -472,7 +482,9 @@ LiDAR 固定关节分别为：
 
 Airy 驱动配置打印的通用 transform 与 M20 URDF 安装位置不一致，但参考构建缓存
 确认 `ENABLE_TRANSFORM=OFF`，因此它不作用于输出点。M20 主配置自行应用原始前
-Airy 到 `base_link` 的 `Ry(+pi/2)` 和 URDF 平移 `[0.32028,0,-0.013]`。
+Airy 到 `base_link` 的 `Rx(pi)*Ry(pi/2)` 和 URDF 平移 `[0.32028,0,-0.013]`。
+URDF 的 LiDAR 安装 link 不定义 bag 的原始点云轴；旋转经地面位置及动态 IMU
+方向核对，旧的仅加速度反号方案已撤销。
 
 前 Airy DIFOP 工厂标定为 LiDAR 到 IMU：
 `q_xyzw=[-0.703521,0.710655,-0.00485685,0.00199339]`、
@@ -522,10 +534,10 @@ Airy 到 `base_link` 的 `Ry(+pi/2)` 和 URDF 平移 `[0.32028,0,-0.013]`。
 | `run6axis.launch` | `paramsLivoxIMU.yaml` | 六轴 IMU，包含通用 robot state publisher |
 | `run9axis.launch` | `params9axisIMU.yaml` | 九轴 IMU |
 | `run.launch` | `params.yaml` | 通用入口，并启用 NavSat 模块 |
-| `rbf_cuda/launch/run_rbf.launch` | 使用代码默认 `rbf/*` 参数 | 独立高程拟合和 FK |
+| `rbf_cuda/launch/run_rbf.launch` | 使用代码默认 `rbf/*` 参数；统计路径默认 `/tmp/rbf_lio_rbf` | 独立高程拟合和 FK |
 | `rbf_cuda/launch/run.launch` | `rbf_cuda/config/params.yaml` | 旧版五节点处理链 |
 
-多个 launch 和脚本包含 `/root/...` 绝对路径。这些默认路径是否对应当前实验环境为 **UNKNOWN**，运行时应显式覆盖。
+多个历史 launch 和脚本包含 `/root/...` 绝对路径。这些默认路径是否对应当前实验环境为 **UNKNOWN**，运行时应显式覆盖。M20 入口及独立高程节点的统计路径已参数化。
 
 # 10. Outputs（输出）
 
@@ -575,8 +587,6 @@ Airy 到 `base_link` 的 `Ry(+pi/2)` 和 URDF 平移 `[0.32028,0,-0.013]`。
 | `mae.txt` | 同上 | 记录 RBF 拟合 MAE |
 | GPS TUM | `gps2tum.py` 硬编码路径 | 离线运行脚本 |
 | Odometry TUM | `odom_recorder.py` 硬编码路径 | 运行记录节点 |
-
-`elevation_rbf.cpp` 会创建硬编码 JSON 目录并构造 JSON 内容，但实际写文件代码被 `if (false)` 包裹，因此当前不会写出 JSON。
 
 # 11. Module Dependency Map（模块依赖图）
 
@@ -685,9 +695,13 @@ flowchart TD
 
 # 14. Known Ambiguities（已知歧义与待确认项）
 
-1. **UNKNOWN：实际构建状态。** 当前分析没有在 ROS Noetic、GTSAM、Livox 和 CUDA 环境中执行完整编译。
+1. **已验证构建组合。** 2026-09-09 在 Ubuntu 20.04.6、ROS Noetic、GCC 9.4、
+   GTSAM 4.0.3、PCL 1.10、OpenCV 4.2、CUDA 11.8 上完成三个包全量构建；
+   仓库仍未锁定依赖版本，Livox 硬件路径未回放。
 2. **UNKNOWN：根 CMake 历史。** 根 `CMakeLists.txt` 很像被复制为普通文本的 Catkin 符号链接目标，但仓库无法证明其原始文件类型。
-3. **UNKNOWN：M20 运行验证。** 输入和四轮运动学已接入，但尚未在 Linux/ROS Noetic 中完整编译并回放测试 bag。
+3. **M20 回放已验证、精度未知。** RBF 开/关均完成 16.5 s 测试 bag 回放。
+   关节转换已按厂家 SDK 接入，当前记录见交接文档第 6 节；bag 无 ground truth，
+   不能据此确认定位精度。
 4. **UNKNOWN：外部回环生产者。** 仓库订阅 `lio_loop/loop_closure_detection`，但不包含发布该话题的实现。
 5. **UNKNOWN：GPS 来源。** 仓库包含 NavSat launch 和 GPS 因子，但没有硬件驱动、datum 或数据集级配置。
 6. **TODO：主 RBF 地形语义。** 主求值器将局部地图点 `z` 当作高斯核系数，但这些点不是 `VoxelGridRBF` 输出的中心/权重。该行为是否为最终设计无法确认。
@@ -696,12 +710,18 @@ flowchart TD
 9. **TODO：递归权重更新未进入活动链。** `updateWeightCuda()` 已实现，但 `elevation_rbf` 每次调用 `initialWeightCuda()`。
 10. **TODO：论文联合优化未在代码中等价实现。** 当前代码先局部求接触点，再有限差分位姿；没有在同一优化变量中联合求解位姿和显式接触点。
 11. **UNKNOWN：非默认帧配置。** 当 LiDAR 帧与 base 帧不同时，硬编码轮运动学和地图位姿之间缺少显式转换说明。
-12. **TODO：M20 关节值约定。** 测试桥直接转发 APDU 数值，当前 bag 的若干值超出 URDF 限位。APDU 到 URDF 关节的符号、零偏和顺序转换尚未由可执行代码确认；最终实现必须以 URDF 为准。
+12. **已接入：M20 关节转换。** 适配器采用厂家 SDK 的方向/零偏及整圈归一化，
+    现有 bag 转换后全部符合 URDF 限位。更换固件时仍须复核已知姿态。
 13. **UNKNOWN：实验精度复现。** 仓库已有接口测试 bag，但没有 ground truth、ATE/RTE 计算、轨迹对齐或论文绘图脚本。
-14. **TODO：硬编码路径。** 多个 launch 和脚本使用 `/root/...` 路径，未参数化的脚本不能直接移植。
+14. **TODO：历史硬编码路径。** 多个历史 launch 和脚本使用 `/root/...` 路径，未参数化的脚本不能直接移植；M20 及 `elevation_rbf` 的当前输出路径已参数化。
 15. **TODO：辅助脚本安装。** `fk.py` 被 launch 直接引用，但 `rbf_cuda/CMakeLists.txt` 没有对应 `catkin_install_python()`；安装空间中的可发现性未经验证。
 16. **TODO：实机 ROS 版本边界。** `run_m20.launch` 是 ROS 1；Airy 参考驱动是 ROS 2，仓库仍没有已验证的在线 bridge 启动方案。
-17. **UNKNOWN：测试覆盖。** 当前仓库没有发现自动化单元测试、集成测试或 rosbag 回归测试。
-18. **TODO：Airy 外参现场复核。** DIFOP q/t 已接入，但组合外参仍需用静止重力、已知运动和地图方向在实机确认。
+17. **TODO：测试覆盖。** 当前源码定义 11 个 Python 用例和 1 个 C++ rostest，
+    覆盖编码器转换、整圈等价性、源时间戳、轮速方向、重复/非法数据处理、
+    地面/静止加速度方向、DIFOP 刚体组合、URDF 限位解析/截断、四轮数量、零位轮心/轮轴、有限值、动态 URDF 限位
+    截断及 12 组确定性关节姿态的独立 URDF 链 FK 对照；另完成一次手工
+    rosbag 回放。尚无自动 rosbag 或数值 Jacobian 回归测试。
+18. **TODO：Airy 外参现场复核。** DIFOP q/t 和当前 Airy 加速度符号已通过测试
+    bag 的静止起始段及整包回放检查，但仍需用实机静止、已知运动和地图方向确认。
 19. **TODO：驱动变换责任边界。** 已提供构建缓存显示参考驱动 `ENABLE_TRANSFORM=OFF`；实际部署也必须保持关闭，避免与 `paramsM20.yaml` 重复变换。
-20. **TODO：真实 500 Hz 关节链。** `support/m20_udp_bridge.zip` 和测试 bag 只提供重复发布方案；GOS 直接 500 Hz 的最终消息生产者尚未进入仓库。
+20. **可选采集改进：真实 500 Hz 关节链。** 测试 bag 只提供约 10 Hz 源数据；GOS 直接 500 Hz 的消息生产者尚未进入仓库，不阻塞当前离线运行。

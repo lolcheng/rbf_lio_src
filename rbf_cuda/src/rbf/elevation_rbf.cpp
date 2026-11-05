@@ -29,15 +29,14 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <nav_msgs/Odometry.h>
+#include <filesystem>
+#include <system_error>
 
 #include "scancontext/tic_toc.h"
 #include "rbf_fitting/rbf_fit.h"
 
-#include <nlohmann/json.hpp>
 #include <fstream>
-#include <sstream>
 #include <iomanip>
-using json = nlohmann::json;
 using namespace std;
 using namespace rbf_fit;
 
@@ -216,57 +215,6 @@ void odomCallback(const nav_msgs::OdometryConstPtr& odom_msg)
         ROS_WARN("Empty elevation cloud, skipping publish.");
     }
 
-    // --- Save data to JSON file named by odom timestamp ---
-    std::string out_dir = "/root/code/result/RBF";
-    std::string mkdir_cmd = "mkdir -p " + out_dir;
-    (void)system(mkdir_cmd.c_str());
-
-    std::ostringstream fname_ss;
-    fname_ss << out_dir << "/" << odom_msg->header.stamp.sec << "_" << odom_msg->header.stamp.nsec << ".json";
-    std::string filepath = fname_ss.str();
-
-    try {
-        json j;
-
-        // timestamp as string
-        std::ostringstream ts_ss;
-        ts_ss << odom_msg->header.stamp.sec << "." << std::setw(9) << std::setfill('0') << odom_msg->header.stamp.nsec;
-        j["timestamp"] = ts_ss.str();
-
-        // pose
-        const auto &pos = odom_msg->pose.pose.position;
-        const auto &ori = odom_msg->pose.pose.orientation;
-        j["pose"]["position"] = { {"x", pos.x}, {"y", pos.y}, {"z", pos.z} };
-        j["pose"]["orientation"] = { {"x", ori.x}, {"y", ori.y}, {"z", ori.z}, {"w", ori.w} };
-        j["mean_weight"] = test_rbf.mean_weight_;
-
-        // act_rbf_grid_: convert vector<Eigen::Matrix<double,2,1>> to JSON array of [x,y]
-        {
-            json cur_grid = json::array();
-            for (const auto &v : test_rbf.act_rbf_grid_) {
-                // v is Eigen::Matrix<double,2,1> (2x1 column vector)
-                cur_grid.push_back( { v(0), v(1) } );
-            }
-            j["cur_rbf_grid"] = std::move(cur_grid);
-        }
-
-        // rbf_weight_ (assume vector<double>)
-        j["rbf_weight"] = test_rbf.rbf_weight_;
-
-        // 写入文件
-        if (false)
-        {std::ofstream ofs(filepath);
-        if (!ofs.is_open()) {
-            ROS_WARN_STREAM("Failed to open JSON file for writing: " << filepath);
-        } else {
-            ofs << j.dump(2) << std::endl; // indent=2
-            ofs.close();
-            ROS_INFO_STREAM("Saved RBF data to JSON: " << filepath);
-        }}
-    } catch (const std::exception &e) {
-        ROS_WARN_STREAM("Exception while serializing JSON: " << e.what());
-    }
-
     last_odom = *odom_msg;
 }
 
@@ -290,7 +238,7 @@ int main(int argc, char** argv)
     nh.param<double>("rbf/weight_noise", weight_noise, 0.5);
     nh.param<double>("rbf/cloud_downsapmle_leaf", cloud_downsapmle_leaf, 0.05);
     nh.param<double>("rbf/margin", margin, 1e-3);
-    nh_private.param<string>("file_path", file_path, "/root/code/result/staircase2");
+    nh_private.param<string>("file_path", file_path, "/tmp/rbf_lio_rbf");
 
     // message_filters::Subscriber<sensor_msgs::PointCloud2> cloud_sub(nh, "/local_map", 1);
     // message_filters::Subscriber<nav_msgs::Odometry> odom_sub(nh, "/Odometry", 1);
@@ -315,8 +263,12 @@ int main(int argc, char** argv)
     test_rbf.setMargin(margin);
 
     // 初始化统计信息保存文件
-    std::string mkdir_cmd = "mkdir -p " + file_path;
-    (void)system(mkdir_cmd.c_str());
+    std::error_code directory_error;
+    std::filesystem::create_directories(file_path, directory_error);
+    if (directory_error) {
+        ROS_WARN_STREAM("Failed to create statistics directory '" << file_path
+                        << "': " << directory_error.message());
+    }
 
     std::string kernel_matrix_time_path = file_path + "/kernel_matrix_time.txt";
     std::string weight_time_path = file_path + "/weight_time.txt";

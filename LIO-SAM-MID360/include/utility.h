@@ -135,6 +135,7 @@ public:
     // IMU
     int imuType;
     double imuFrequency;
+    double imuAccelerationSign;
     float imuAccNoise;
     float imuGyrNoise;
     float imuAccBiasN;
@@ -326,6 +327,16 @@ public:
             ros::shutdown();
             imuFrequency = 500.0;
         }
+        nh.param<double>("lio_sam/imuAccelerationSign", imuAccelerationSign, 1.0);
+        if (!std::isfinite(imuAccelerationSign) ||
+            (std::abs(imuAccelerationSign - 1.0) > 1e-6 &&
+             std::abs(imuAccelerationSign + 1.0) > 1e-6))
+        {
+            ROS_FATAL_STREAM("Invalid lio_sam/imuAccelerationSign: "
+                             << imuAccelerationSign << " (expected -1 or 1)");
+            ros::shutdown();
+            imuAccelerationSign = 1.0;
+        }
 
         nh.param<int>("lio_sam/N_SCAN", N_SCAN, 16);
         nh.param<int>("lio_sam/Horizon_SCAN", Horizon_SCAN, 1800);
@@ -359,7 +370,8 @@ public:
         extQRPY = Eigen::Quaterniond(extRPY).inverse();
 
         ROS_INFO_STREAM("[lio_sam] imuType: " << imuType << " imuFrequency: " << imuFrequency
-                        << " imuGravity: " << imuGravity);
+                        << " imuGravity: " << imuGravity
+                        << " imuAccelerationSign: " << imuAccelerationSign);
         ROS_INFO_STREAM("[lio_sam] extrinsicTrans: [" << extTrans.x() << ", " << extTrans.y() << ", " << extTrans.z() << "]");
         ROS_INFO_STREAM("[lio_sam] extrinsicRot:\n" << extRot);
         ROS_INFO_STREAM("[lio_sam] extrinsicRPY:\n" << extRPY);
@@ -455,6 +467,7 @@ public:
     //livox 内置的六轴imu的加速度单位是g 这里要还原到m/s^2
     if(imuType==0)
         acc*=imuGravity;
+    acc *= imuAccelerationSign;
 
     acc = extRot * acc;
     imu_out.linear_acceleration.x = acc.x();

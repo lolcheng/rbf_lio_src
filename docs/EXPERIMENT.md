@@ -2,7 +2,12 @@
 
 本文只记录当前仓库中的代码、配置、launch、脚本、README 和 `support/RBF_LIO.pdf` 能够支持的实验流程。命令中的 `<...>` 是必须由复现者提供的占位符；仓库无法确认的内容统一标记为 **UNKNOWN**。
 
-> 事实边界：仓库已有 `data/rosbag/m20_upstairs.bag`，当前 ROS 1 主代码已增加 Airy `PointCloud2` 和 M20 自定义关节消息适配，但尚未在 Linux/ROS 环境中完成编译和整包回放。仓库能够生成 RBF-LIO 里程计、TUM 轨迹、PCD 地图和独立 RBF 节点的耗时/MAE 日志，但没有 ground truth、ATE、z-ATE、RTE 计算脚本，也没有论文表格或绘图脚本。因此，从现有 M20 bag 到论文指标的链路仍不完整。
+> 事实边界：仓库已有 `data/rosbag/m20_upstairs.bag`，当前 ROS 1 主代码已增加
+> Airy `PointCloud2` 和 M20 自定义关节消息适配，并于 2026-09-09 在 Ubuntu/ROS
+> 环境完成全量编译与 RBF 开/关整包回放。仓库能够生成 RBF-LIO 里程计、TUM
+> 轨迹、PCD 地图和独立 RBF 节点的耗时/MAE 日志，但没有 ground truth、ATE、
+> z-ATE、RTE 计算脚本，也没有论文表格或绘图脚本。因此，从现有 M20 bag 到
+> 论文指标的链路仍不完整。
 
 # 1. Experimental Pipeline
 
@@ -41,7 +46,7 @@ M20 + 双 RoboSense Airy
   -> data/rosbag/m20_upstairs.bag
   -> run_m20.launch + paramsM20.yaml
   -> Airy PointCloud2/IMU + M20 四轮运动学适配
-  -> RBF-LIO -> trajectory/map（TODO：ROS 回放验证）
+  -> RBF-LIO -> trajectory/map（ROS 接口回放已验证，精度未验证）
   -> ground truth/evaluation/figure（UNKNOWN/缺失）
 ```
 
@@ -51,9 +56,9 @@ M20 对应入口为 `LIO-SAM-MID360/launch/run_m20.launch`，历史 MID360/Tron1
 
 | 阶段 | 仓库状态 | 证据 |
 |---|---|---|
-| 数据读取 | 已实现，待运行验证 | M20 测试 bag、`airyCloudHandler()`、`m20_joint_state_adapter.py` |
-| ROS 启动 | 存在 | `LIO-SAM-MID360/launch/*.launch` |
-| RBF-LIO 估计 | 存在 | `LIO-SAM-MID360/src/` |
+| 数据读取 | 已实现并完成测试 bag 回放 | M20 测试 bag、`airyCloudHandler()`、`m20_joint_state_adapter.py` |
+| ROS 启动 | 已验证 M20 入口 | `LIO-SAM-MID360/launch/run_m20.launch` |
+| RBF-LIO 估计 | 开/关 RBF 均可运行；无精度真值 | `LIO-SAM-MID360/src/`、2026-09-09 回放记录 |
 | TUM 轨迹 | 存在 | `mapOptmization::saveTUMTrajectoryToFile()` |
 | GPS 转 TUM | 存在但硬编码 | `rbf_cuda/script/gps2tum.py` |
 | ATE/z-ATE/RTE | **UNKNOWN / 缺失** | 未找到对应脚本或程序 |
@@ -69,13 +74,12 @@ M20 对应入口为 `LIO-SAM-MID360/launch/run_m20.launch`，历史 MID360/Tron1
 | ROS | ROS 1 Noetic；根 `CMakeLists.txt` 指向 `/opt/ros/noetic/share/catkin/cmake/toplevel.cmake` | 根 `CMakeLists.txt` |
 | 构建系统 | Catkin / CMake | 两个 ROS 包的 `CMakeLists.txt` |
 | C++ 标准 | `lio_sam` 使用 C++14；`cuda_rbf` 使用 C++17 | `LIO-SAM-MID360/CMakeLists.txt`、`rbf_cuda/CMakeLists.txt` |
-| 编译器 | 支持对应 C++ 标准且兼容 ROS/CUDA 的编译器；具体 GCC 版本 **UNKNOWN** | CMake 未锁定版本 |
+| 编译器 | 仓库未锁定；当前成功组合为 GCC 9.4 | CMake、2026-09-09 构建 |
 | CUDA | 构建 `cuda_rbf` 时必需；`lio_sam` 自身以可选方式查找 CUDA | 两个包的 `CMakeLists.txt` |
-| CUDA 版本 | **UNKNOWN** | 仓库未锁定版本 |
+| CUDA 版本 | 仓库未锁定；当前成功组合为 CUDA 11.8 | 2026-09-09 构建 |
 | ROS C++ 依赖 | `roscpp`、`rospy`、`tf`、`sensor_msgs`、`nav_msgs`、`geometry_msgs`、`visualization_msgs`、`pcl_conversions`、`cv_bridge`、消息生成；Livox 包为可选 | `package.xml`、CMake |
 | 外部 C++ 依赖 | PCL、OpenCV、Eigen3、GTSAM、Boost、OpenMP | CMake |
 | CUDA 依赖 | CUDA Toolkit、Thrust、cuBLAS、cuSOLVER | `rbf_cuda/CMakeLists.txt`、`rbf_cuda/src/cuda/` |
-| 独立 RBF 节点 | `nlohmann_json` | `rbf_cuda/CMakeLists.txt` |
 | GPS 转换脚本 | Python 3、ROS `rosbag`、`pyproj`、`tqdm` | `rbf_cuda/script/gps2tum.py` |
 | 机器人 FK 脚本 | Python 3、`rospy`、NumPy、`urdfpy`、`tf_conversions` | `rbf_cuda/script/fk.py` |
 | Airy 参考驱动 | ROS 2；现场日志确认 RSLidar SDK v1.5.19 | `support/rslidar_ros2_ws`、现场启动日志 |
@@ -97,7 +101,7 @@ ln -s /absolute/path/to/rbf_lio_20260402/rbf_cuda cuda_rbf
 ln -s /absolute/path/to/rbf_lio_20260402/robot-description robot_description
 catkin_init_workspace
 cd ~/rbf_lio_ws
-catkin_make
+catkin_make -DPYTHON_EXECUTABLE=/usr/bin/python3
 source devel/setup.bash
 ```
 
@@ -108,7 +112,10 @@ source devel/setup.bash
 - 运行 Livox 输入时，其消息 MD5 必须与编译期选择的 `livox_ros_driver/CustomMsg.h` 或 `livox_ros_driver2/CustomMsg.h` 一致。M20/Airy 路径不要求安装 Livox 包。
 - 构建完整工作区时 `cuda_rbf` 使用 `find_package(CUDA REQUIRED)`，没有 CUDA 的环境不能按上述命令完整构建。
 - 仓库没有 Dockerfile、rosdep 锁文件或固定依赖版本，精确依赖安装命令为 **UNKNOWN**。
-- 本仓库没有可确认的成功构建日志，因此上述命令是代码结构支持的构建方式，不代表当前机器已经编译通过。
+- 2026-09-09 已用系统 GCC/CMake/Python/Boost 完成三个包全量构建。当前登录环境
+  含 Anaconda；若 CMake 找到 Anaconda Boost 1.82，会与 ROS/GTSAM 的系统 Boost
+  1.71 混链并链接失败。构建前应把 `/usr/bin` 和 `/opt/ros/noetic/bin` 置于
+  Anaconda 之前，并确认 `PYTHON_EXECUTABLE=/usr/bin/python3`。
 - `robot-description/CMakeLists.txt` 已安装 `M20` 目录，不再引用已删除的 Tron1A 模型目录。
 - `support/rslidar_ros2_ws` 通过 Git submodule 固定官方 SDK v1.5.19 和 `rslidar_msg`。克隆后需递归初始化，并应用该目录 README 所述的 M20 配置/构建差异；实际 ROS 2 依赖版本仍为 **UNKNOWN**。
 
@@ -123,7 +130,11 @@ source devel/setup.bash
 - `/JOINTS_DATA`：`m20_udp_bridge/M20JointsData`，表面发布率约 500 Hz，但只有约 10 Hz 的源样本更新，其余消息带重复语义。
 - `/IMU`：`m20_udp_bridge/M20Imu`，表面发布率约 200 Hz，但同样只有约 10 Hz 的源样本更新；内容为桥接后的运动状态派生字段，不是原始 IMU 三轴测量。
 
-该 bag 不含 `/tf`、`/tf_static`、`/joint_states`、GNSS 或 ground truth。若干关节角还超出 M20 URDF 限位，因此它是接口测试数据，不是已标定的四轮运动学或定位精度数据。最终 `/JOINTS_DATA` 要求由 GOS 直接提供真实 500 Hz 样本。
+该 bag 不含 `/tf`、`/tf_static`、`/joint_states`、GNSS 或 ground truth。
+2026-11-05 已按厂家 SDK 方向和零偏将原始编码器角转换到 URDF，整包 8258 条
+关节消息转换后均符合限位。配置与起始站姿见 [交接文档 4.3](HANDOFF_UBUNTU.md#编码器到-urdf-的转换2026-11-05)。
+它可用于离线运行和 RBF 开关对照，但没有定位精度真值；约 500 Hz 重复发布
+不能当作 500 Hz 独立观测。更高频数据采集不作为运行此 bag 的前提。
 
 旧 `mountain.bag` 仍只出现在以下两处：
 
@@ -150,7 +161,9 @@ source devel/setup.bash
 
 - Livox 路径要求 `CustomMsg`；M20/Airy 路径要求包含 float32 `x/y/z/intensity`、uint16 `ring`、float64 绝对 `timestamp` 的 `PointCloud2`。
 - README 明确要求 LiDAR 与 IMU 时间戳对齐。允许的时间偏差、硬件同步方案和 rosbag 时间修正方法为 **UNKNOWN**。
-- `imuType: 0` 时，`imuConverter()` 将输入线加速度乘以重力常数，表示该配置期待以 `g` 为单位的 MID360 内置 IMU 加速度；外部 IMU 的单位和外参必须另行核对。
+- `imuType: 0` 时，`imuConverter()` 将输入线加速度乘以重力常数，再乘
+  `imuAccelerationSign`。修正三维外参后 M20/Airy 使用 `+1`，其他配置缺省为 `+1`；外部 IMU 的
+  单位、符号和外参必须分别核对。
 - Tron1A 轮地约束需要 8 个关节位置；M20 路径需要 12 个腿关节位置，并由适配器发布 16 个 URDF 关节。M20 默认顺序和名称在 `m20_joint_state_adapter.py` 中明确。
 - `gps2tum.py` 期待 `/ublox_driver/receiver_lla` 消息具有 `latitude`、`longitude`、`altitude` 字段，但脚本没有声明其具体 ROS 消息类型，故类型为 **UNKNOWN**。
 
@@ -158,7 +171,8 @@ source devel/setup.bash
 
 本节中的“标准 RBF-LIO”指当前主实现 `LIO-SAM-MID360`，不是 `rbf_cuda/src/lio_sam` 的旧版/实验性分支。
 
-`run_tron1a_all.launch` 是历史 Tron1A 入口。M20/Airy 基线由 `run_m20.launch` 与 `paramsM20.yaml` 定义，但尚无本仓库可引用的成功 ROS 回放日志。
+`run_tron1a_all.launch` 是历史 Tron1A 入口。M20/Airy 基线由 `run_m20.launch` 与
+`paramsM20.yaml` 定义；2026-09-09 已完成下述测试 bag 回放，但没有 ground truth。
 
 ## 5.1 M20 接口回放基线
 
@@ -181,6 +195,18 @@ rosbag play --clock /absolute/path/to/rbf_lio_20260402/data/rosbag/m20_upstairs.
 ```
 
 命令来源：`LIO-SAM-MID360/launch/run_m20.launch` 和 `config/paramsM20.yaml`。`--clock` 与 `use_sim_time` 用于按 bag 时间运行；测试 bag 不含 ground truth，不能由该命令计算 ATE/RTE。
+
+关节转换接入前的 2026-09-09 历史回放：关闭 RBF 时生成 81 条有限 TUM 位姿；开启 RBF 时收到 129 组
+9 元素统计，`constraint_count` 始终为 24，且 8258 条适配关节、81 条建图里程计、
+162 帧去畸变点云和 81 帧局部地图的抽查值均有限。开启后的末端位置范数较关闭
+时更大，但没有 ground truth 且关节坐标未标定，不能把该差值解释为精度改善或退化。
+当前关节转换接入后的构建、测试和开关回放记录见 `HANDOFF_UBUNTU.md` 第 6 节。
+
+另以 `with_rbf_visualization:=true` 启动独立 `elevation_rbf`回放同一 bag：
+CUDA 核矩阵和权重求解实际执行，观测到 18 帧每帧 360,000 点的
+`/rbf_elevation_map`，坐标无 NaN/Inf；`kernel_matrix_time.txt`、
+`weight_time.txt` 和 `mae.txt` 各 18 行且值均有限。这证明辅助 GPU 链路可运行，
+不代表它已与主 LM 的轮地残差模型接通。
 
 ## 5.2 历史主入口
 
@@ -345,7 +371,7 @@ python3 rbf_cuda/script/gps2tum.py
 - 没有 Matplotlib、gnuplot、Pandas、LaTeX 表格或其他 plotting/table generation 脚本；
 - `LIO-SAM-MID360/README.md` 包含演示 GIF/图片引用，但没有它们的生成流程；
 - `elevation_rbf.cpp` 只生成逐时间戳数值日志和 `/rbf_elevation_map`，不生成直方图、箱线图或表格；
-- JSON 序列化代码被 `if (false)` 禁用，运行时不会写出规划中的 RBF JSON 文件。
+- 当前没有活动的 RBF JSON 导出器。
 
 因此论文 Fig. 6 至 Fig. 11、Table I 至 Table VIII 的原始数据文件、绘图命令、颜色/坐标配置和表格汇总规则均为 **UNKNOWN**。仓库当前不能端到端复现这些图表。
 
@@ -373,7 +399,7 @@ $HOME<save_map.destination>/          # save_map 服务会删除后重建
 
 - `run_tron1a_all.launch`：`/root/code/rbf_lio/result_0331/staircase2/...`
 - `run6axis.launch`：`/root/code/ws_lio/result/staircase2/...`
-- `run_rbf.launch`：`/root/code/rbf_lio/result/rbf/default`
+- `run_rbf.launch`：统计输出默认为 `/tmp/rbf_lio_rbf`
 - `gps2tum.py`：`/root/code/ws_lio/result/mountain/gps_trajectory.tum`
 - `odom_recorder.py`：`/root/cuda_rbf_ws/src/result/fast_lio_trajectory.tum`
 - `paramsLivoxIMU.yaml` 的默认地图目录：`$HOME/Downloads/LOAM/`
@@ -387,12 +413,14 @@ $HOME<save_map.destination>/          # save_map 服务会删除后重建
 - [ ] 已记录 `m20_upstairs.bag` 的路径/校验和，并明确它只用于接口测试；论文数据集仍为 **UNKNOWN**。
 - [ ] 已用 `rosbag info` 核对 Livox 消息包、LiDAR/IMU topic 和 `_123`/`_141` 地址差异。
 - [ ] 已核对 LiDAR/IMU 时间同步、IMU 单位和 `extrinsicRot` / `extrinsicRPY` / `extrinsicTrans`。
-- [ ] 已确认 `/joint_states` 包含 8 个关节、名称/顺序正确且时间覆盖 LiDAR 帧。
-- [ ] 对 M20 已确认 `/JOINTS_DATA` 是 GOS 直接真实 500 Hz，而不是测试桥对约 10 Hz 源样本的重复发布。
-- [ ] 对 M20 已将 APDU 关节值转换到 URDF 符号、零位、顺序和限位；当前规则为 **UNKNOWN**。
+- [ ] 已确认 Tron1A `/joint_states` 包含 8 个位置，或 M20
+  `/joint_states_m20` 包含 12 个腿关节/16 个 URDF 关节；名称、顺序和时间覆盖正确。
+- [x] 已记录当前 M20 bag 只有约 10 Hz 独立关节样本，不将重复发布误报为真实 500 Hz。
+- [x] 对当前 M20 bag 已将编码器关节值转换到 URDF 符号、零位、顺序和限位；新数据源需复核。
 - [ ] 对 Airy 已确认驱动侧点云 transform 是否启用，并消除与 RBF-LIO/URDF 的重复变换。
-- [ ] 已取得前 Airy DIFOP LiDAR-IMU 工厂旋转/平移标定；当前缺失。
-- [ ] 已为每次实验创建独立 TUM 与 RBF 日志目录，并覆盖 launch 中的 `/root/...` 默认值。
+- [x] 已取得前 Airy DIFOP LiDAR-IMU 工厂旋转/平移标定并写入 M20 组合外参；
+  实机方向复核仍待完成。
+- [ ] 已为每次实验创建独立 TUM 与 RBF 日志目录，并覆盖历史入口中仍存在的 `/root/...` 默认值。
 - [ ] 已记录所用 launch 和完整 YAML；Full 模型确认 `enableRbfConstraint=true`。
 - [ ] 已确认日志中 RBF 约束未因缺关节、空地图、零节点或非法数值被跳过。
 - [ ] 已检查 `trajectory_tum.txt` 非空、时间单调、位置/四元数为有限值。
@@ -406,7 +434,8 @@ $HOME<save_map.destination>/          # save_map 服务会删除后重建
 # 11. Known Missing Information
 
 1. **UNKNOWN：论文数据集获取方式。** 仓库只有 M20 接口测试 bag，没有论文数据集下载 URL、许可证、校验和或序列清单。
-2. **TODO：M20 bag 回放验证。** PointCloud2、每点绝对时间和 M20 四轮关节消息已接入主代码，但尚未在 ROS Noetic 环境完成整包运行。
+2. **TODO：M20 bag 精度验证。** ROS Noetic 整包运行和编码器到 URDF 转换已完成，
+   但 bag 没有 ground truth，不能计算定位误差或证明约束改善精度。
 3. **UNKNOWN：论文序列与本地文件的映射。** Staircase 1/2、Artificial Hill、Rose Garden、Botanical Garden、Indoor Staircase Only、Wet Grass 没有文件名映射。
 4. **UNKNOWN：ground truth 来源与标定。** PDF 提到 RTK reference；仓库未给出 RTK 解算文件、基站信息、天线外参或质量筛选规则。
 5. **UNKNOWN：时间同步与轨迹关联。** 没有传感器时偏、关联阈值和插值方法。
@@ -416,10 +445,13 @@ $HOME<save_map.destination>/          # save_map 服务会删除后重建
 9. **UNKNOWN：随机性控制。** 点云随机下采样/扇区遮挡的种子、重复次数和统计规则未提供。
 10. **UNKNOWN：RBF 参数研究数据。** 没有 Fig. 6 使用的参数列表、逐帧残差原始文件或 top-1% 剔除脚本。
 11. **UNKNOWN：论文图表流水线。** 没有绘图、表格、地图截图和轨迹可视化脚本。
-12. **UNKNOWN：精确运行环境。** OS 镜像、GCC、CUDA、驱动、GTSAM、PCL 和 Livox driver 版本未锁定。
+12. **UNKNOWN：论文精确运行环境。** 当前成功构建组合已记录，但论文生成环境及
+    Livox 驱动版本仍未锁定。
 13. **TODO：将硬编码路径参数化。** `gps2tum.py`、`odom_recorder.py` 和若干 launch 默认值依赖旧机器路径；本手册未修改这些文件。
 14. **TODO：补充无源码修改的实验配置集合。** 当前 w/o-manifold 等变体需要切换 YAML，但仓库没有只读预设配置或 launch 参数。
 15. **TODO：补充从 rosbag 到论文表格的验证脚本。** 当前可复现链路在 TUM 轨迹和 RBF 原始日志处终止。
-16. **UNKNOWN：Airy 内部标定。** 前 Airy DIFOP 中 LiDAR-IMU 工厂旋转/平移参数未包含在配置或启动日志中。
-17. **UNKNOWN：驱动点云变换归属。** 驱动配置打印的前雷达 `[0.0501,0,0.739]`、pitch `+pi/2` 与 M20 URDF 前雷达位姿不一致；`ENABLE_TRANSFORM` 的实际构建状态也未提供。
-18. **TODO：最终关节数据源。** 测试 bridge 的重复发布只可用于联调；GOS 原生 500 Hz 生产者、消息时间戳语义和实测 bag 尚未提供。
+16. **TODO：Airy 内部标定实机复核。** 前 Airy DIFOP LiDAR-IMU 工厂 q/t 已写入
+    M20 组合外参并通过测试 bag 回放，但设备坐标说明和现场运动验证仍不完整。
+17. **TODO：驱动点云变换运行时复核。** 参考构建缓存已确认
+    `ENABLE_TRANSFORM=OFF`；部署机器仍须确认实际构建保持关闭，避免与主包重复变换。
+18. **可选采集改进：关节数据源。** GOS 原生 500 Hz 生产者、消息时间戳语义和实测 bag 尚未提供；现有重复发布数据可离线回放，但不提供额外独立观测。

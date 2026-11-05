@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import math
+import xml.etree.ElementTree as ET
 
 import rospy
 from sensor_msgs.msg import JointState
@@ -14,6 +15,53 @@ JOINT_NAMES = (
     "hr_hipx_joint", "hr_hipy_joint", "hr_knee_joint", "hr_wheel_joint",
 )
 
+LEG_JOINT_NAMES = tuple(
+    joint_name for index, joint_name in enumerate(JOINT_NAMES) if index % 4 != 3
+)
+
+
+def parse_urdf_position_limits(robot_description):
+    try:
+        root = ET.fromstring(robot_description)
+    except ET.ParseError as exc:
+        raise ValueError("robot_description is not valid XML: %s" % exc)
+
+    urdf_joints = {joint.get("name"): joint for joint in root.findall("joint")}
+    limits = []
+    for joint_name in LEG_JOINT_NAMES:
+        joint = urdf_joints.get(joint_name)
+        limit = joint.find("limit") if joint is not None else None
+        if limit is None or limit.get("lower") is None or limit.get("upper") is None:
+            raise ValueError("missing URDF position limits for %s" % joint_name)
+        lower = float(limit.get("lower"))
+        upper = float(limit.get("upper"))
+        if not math.isfinite(lower) or not math.isfinite(upper) or lower > upper:
+            raise ValueError("invalid URDF position limits for %s" % joint_name)
+        limits.append((lower, upper))
+    return tuple(limits)
+
+
+def clamp_positions_to_limits(positions, limits):
+    if len(positions) != len(limits):
+        raise ValueError("position and limit lengths differ")
+    return [max(lower, min(upper, value)) for value, (lower, upper) in zip(positions, limits)]
+
+
+def convert_leg_positions(positions, scales, offsets, wrap_positions=False):
+    if not len(positions) == len(scales) == len(offsets) == len(LEG_JOINT_NAMES):
+        raise ValueError("M20 leg conversion requires 12 positions, scales and offsets")
+    converted = [
+        scale * float(position) + offset
+        for position, scale, offset in zip(positions, scales, offsets)
+    ]
+    if not all(math.isfinite(value) for value in converted):
+        raise ValueError("non-finite M20 leg position")
+    # Encoder and model zeros may differ by a full turn. Select the equivalent
+    # model angle before applying the URDF's bounded revolute-joint limits.
+    if wrap_positions:
+        converted = [math.atan2(math.sin(value), math.cos(value)) for value in converted]
+    return converted
+
 
 class M20JointStateAdapter:
     def __init__(self):
@@ -22,7 +70,16 @@ class M20JointStateAdapter:
         self.drop_stale = bool(rospy.get_param("~drop_stale", True))
         self.position_scale = self._vector_param("~position_scale", 12, 1.0)
         self.position_offset = self._vector_param("~position_offset", 12, 0.0)
+        self.wrap_positions = bool(rospy.get_param("~wrap_positions", False))
         self.wheel_velocity_scale = self._vector_param("~wheel_velocity_scale", 4, 1.0)
+        try:
+            self.position_limits = parse_urdf_position_limits(
+                rospy.get_param("/robot_description")
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise rospy.ROSInitException(
+                "cannot load M20 limits from /robot_description: %s" % exc
+            )
         self.wheel_position = [0.0] * 4
         self.last_source_stamp = None
         self.last_source_sequence = None
@@ -77,10 +134,13 @@ class M20JointStateAdapter:
             msg.right_back_wheel_speed,
         ]
 
-        positions = [
-            self.position_scale[i] * float(value) + self.position_offset[i]
-            for i, value in enumerate(positions)
-        ]
+        try:
+            positions = convert_leg_positions(
+                positions, self.position_scale, self.position_offset, self.wrap_positions
+            )
+        except (TypeError, ValueError, OverflowError):
+            rospy.logwarn_throttle(2.0, "[lio_sam][m20-adapter] dropping invalid leg data")
+            return
         wheel_velocity = [
             self.wheel_velocity_scale[i] * float(value)
             for i, value in enumerate(wheel_velocity)
@@ -88,6 +148,23 @@ class M20JointStateAdapter:
         if not all(math.isfinite(value) for value in positions + wheel_velocity):
             rospy.logwarn_throttle(2.0, "[lio_sam][m20-adapter] dropping non-finite joint data")
             return
+
+        clamped_positions = clamp_positions_to_limits(positions, self.position_limits)
+        for joint_name, measured, clamped, limits in zip(
+            LEG_JOINT_NAMES, positions, clamped_positions, self.position_limits
+        ):
+            if measured != clamped:
+                rospy.logwarn_throttle(
+                    2.0,
+                    "[lio_sam][m20-adapter] %s=%.6f is outside URDF limits "
+                    "[%.6f, %.6f]; clamped to %.6f",
+                    joint_name,
+                    measured,
+                    limits[0],
+                    limits[1],
+                    clamped,
+                )
+        positions = clamped_positions
 
         source_changed = (
             self.last_source_sequence != msg.source_sequence

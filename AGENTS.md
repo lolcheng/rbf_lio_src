@@ -114,20 +114,30 @@ Airy IMU 和机体关节数据；后置 Airy 点云及两台雷达之外的其�
 - `/rslidar_imu_data_front`：`sensor_msgs/Imu`，约 200 Hz；实测 orientation 未填充，
   加速度量级约为 `1 g`。
 - `/JOINTS_DATA`：测试包中约 500 Hz 发布，但有效源样本约 10 Hz 且大量重复；最终
-  版本要求由 GOS 直接提供真实 500 Hz 数据。
+  采集接口可进一步改为 GOS 真实 500 Hz，这不是当前离线回放的前提。
 
 `run_m20.launch` 加载 `paramsM20.yaml`。`ImageProjection::airyCloudHandler()` 将
 Airy 的绝对逐点 `timestamp` 转为相对扫描时间；`m20_joint_state_adapter.py` 将
 `/JOINTS_DATA` 转为 `/joint_states_m20`；`M20JointStateWheelKinematics` 按 URDF
-四条腿生成四个 `WheelGeometry`。这些入口尚未在 Linux/ROS Noetic 中完整编译和回放验证。
+四条腿生成四个 `WheelGeometry`。2026-09-09 已在 Linux/ROS Noetic 中完成三个
+包的全量编译，以及测试 bag 的 RBF 开/关回放；开启时四轮残差稳定生成 24 行。
+独立 `elevation_rbf` 也已验证实际 CUDA 求解、有限高程图和有限统计输出；
+该辅助模型仍不反馈主优化器。
 
 M20 运动学、关节方向、零位、限位和轮尺寸以
-`robot-description/M20/urdf/M20.urdf` 为准。当前测试 bag 的若干关节值超出 URDF
-限位，因此只能验证消息接口，不能验证轮地接触几何。
+`robot-description/M20/urdf/M20.urdf` 为准。`paramsM20.yaml` 的适配器命名空间
+配置厂家 SDK 编码器方向和 rad 零偏，先转换并归一化，再检查动态 URDF 限位。
+现有 bag 的 8258 条关节消息转换后全部在限位内；转换只在适配器执行一次，
+C++ 运动学接收 URDF 坐标并保留防御性限位检查。依据和站姿见交接文档 4.3。
+当前工作是工作站离线回放，无需在线 ROS 版本桥接或机载性能评估。
 
 前置 Airy DIFOP 已提供 LiDAR 到 IMU 标定
 `q_xyzw=[-0.703521,0.710655,-0.00485685,0.00199339]`、
 `t=[0.00425,0.00418,-0.00446]`。`paramsM20.yaml` 将其与前 LiDAR 安装变换组合。
+前 Airy 原始轴到 base 的旋转为 `Rx(pi) * Ry(pi/2)`，即
+`base X=raw Z, base Y=-raw Y, base Z=raw X`；IMU 外参按同一旋转组合 DIFOP。
+当前 `imuAccelerationSign: +1`，静止 specific force 自然指向 `base_link +Z`。
+旧 `Ry(pi/2)` 配合加速度反号会掩盖地图倒置和角速度方向错误，不得恢复该组合。
 参考驱动构建缓存显示 `ENABLE_TRANSFORM=OFF`，M20 主链由 RBF-LIO 负责点云变换；
 实际部署必须保持这一责任边界，避免驱动和 RBF-LIO 重复变换。
 
@@ -143,7 +153,6 @@ M20 运动学、关节方向、零位、限位和轮尺寸以
   `livox_ros_driver/CustomMsg.h` 或 `livox_ros_driver2/CustomMsg.h`；仅构建
   M20/Airy 路径不要求 Livox 包。
 - `cuda_rbf` 包所需的 CUDA Toolkit、Thrust、cuBLAS 和 cuSOLVER。
-- 独立高程节点所需的 `nlohmann_json`。
 - 使用 `fk.py` 时所需的 Python ROS 包、`urdfpy`、NumPy 和
   `tf_conversions`。
 
@@ -169,15 +178,17 @@ ln -s /absolute/path/to/rbf_lio_20260402/rbf_cuda cuda_rbf
 ln -s /absolute/path/to/rbf_lio_20260402/robot-description robot_description
 catkin_init_workspace
 cd ~/rbf_lio_ws
-catkin_make
+catkin_make -DPYTHON_EXECUTABLE=/usr/bin/python3
 source devel/setup.bash
 ```
 
 `cuda_rbf` 在配置和编译时必须存在 CUDA。`lio_sam` 在 CMake 中将 CUDA 视为
 可选依赖，但当前车轮接触残差仍在 CPU 上运行，即使辅助 CUDA 库已成功构建。
 
-`robot-description/CMakeLists.txt` 当前安装 `M20` 目录。由于本次修改尚未在
-受支持的 Linux/ROS 环境实际编译，仍不得声称当前检出已经完整构建成功。
+`robot-description/CMakeLists.txt` 当前安装 `M20` 目录。2026-09-09 的已验证组合
+为 Ubuntu 20.04.6、GCC 9.4、ROS Noetic、GTSAM 4.0.3、PCL 1.10、OpenCV 4.2、
+CUDA 11.8；该记录不代表仓库锁定这些小版本。当前登录环境含 Anaconda，构建时
+必须避免把其 CMake/Python/Boost 与 ROS/GTSAM 的系统 Boost 混链。
 
 除非已经在受支持的 Linux/ROS 环境中实际完成编译，否则不要声称构建成功。
 构建产物应放在外部工作区，或标准的 `build`、`devel`、`install`、`log`
@@ -201,14 +212,13 @@ roslaunch lio_sam run_tron1a_all.launch \
 因此不得将上述命令描述为 M20 启动方式。M20 使用：
 
 ```bash
-rosparam set use_sim_time true
-roslaunch lio_sam run_m20.launch with_rviz:=true with_robot_tf:=true enable_rbf_constraint:=false
+roslaunch lio_sam run_m20.launch use_sim_time:=true with_rviz:=true with_robot_tf:=true enable_rbf_constraint:=true
 rosbag play --clock /absolute/path/to/data/rosbag/m20_upstairs.bag
 ```
 
-上述命令由当前 launch/config 支持，但尚无 Linux/ROS 成功回放记录。
-当前测试 bag 的关节值未通过 URDF 限位验证，因此 M20 launch 默认关闭主 RBF 约束；
-只有在关节方向和零位确认后才应使用 `enable_rbf_constraint:=true`。
+M20 launch 默认关闭主 RBF 以保留基础 LIO 对照；显式传入 `true` 开启四轮约束。
+测试 bag 的约 10 Hz 源样本重复问题会限制时间分辨率，但不阻止离线运行。
+bag 无 ground truth，开关回放只能验证运行和比较表现，不能给出定位精度结论。
 
 运行前应检查 `LIO-SAM-MID360/config/paramsLivoxIMU.yaml` 中的话题配置。仓库
 中的默认值对应一个特定 MID360 地址，通常不会自动匹配其他设备或 rosbag。
@@ -216,7 +226,8 @@ rosbag play --clock /absolute/path/to/data/rosbag/m20_upstairs.bag
 
 - `lio_sam/pointCloudTopic` 指定的 Livox 点云。
 - `lio_sam/imuTopic` 指定的 IMU 数据。
-- `/joint_states` 上至少 8 个关节位置。
+- Tron1A `/joint_states` 上至少 8 个关节位置，或 M20 `/joint_states_m20` 上至少
+  12 个腿关节位置。
 - 使用相关功能时所需的可选 GPS 和回环输入。
 
 `with_rbf` 控制独立的 `elevation_rbf` 可视化/统计节点，不负责启用或禁用
@@ -317,6 +328,8 @@ rosbag play --clock /absolute/path/to/data/rosbag/m20_upstairs.bag
 - 可调参数应通过 `ParamServer` 和 YAML 加载，不要在回调函数中嵌入新的常量。
 - IMU 初始化步长由 `lio_sam/imuFrequency` 设置；M20/Airy 当前为 `200 Hz`，历史
   配置未显式设置时保留 `500 Hz` 默认值。
+- IMU 加速度测量符号由只接受 `+1/-1` 的 `lio_sam/imuAccelerationSign` 设置；
+  M20/Airy 当前为 `+1`，其他配置默认 `+1`；先核对三维旋转，不能只靠加速度反号修正重力。
 - 队列大小和回调线程数必须经过考虑；高频 IMU 和关节输入不能被耗时地图或 RBF
   运算阻塞。
 - 重新发布消息时应保持时间戳同步和正确的 frame ID。
@@ -324,6 +337,9 @@ rosbag play --clock /absolute/path/to/data/rosbag/m20_upstairs.bag
   文件和文档。
 - 修改关节运动学时，应以 `robot-description/M20/urdf/M20.urdf` 核对关节顺序、
   轴向、零位、限位和轮半径；不得直接假定测试桥接包中的 APDU 数值已经符合 URDF。
+- `position_scale`、rad 单位 `position_offset`、`wrap_positions` 和
+  `wheel_velocity_scale` 位于 `paramsM20.yaml` 的 `m20_joint_state_adapter`
+  命名空间。输出 `/joint_states_m20` 已为 URDF 坐标，禁止在 C++ 运动学重复转换。
 - M20 最终关节输入按 GOS 直接提供的真实 500 Hz `JOINTS_DATA` 设计；当前
   `m20_udp_bridge.zip` 的约 10 Hz 数据重复方案只能作为临时测试后备。
 

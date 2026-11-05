@@ -1,5 +1,5 @@
 <launch>
-    <arg name="file_path" default="/root/code/rbf_lio/result/rbf/default" />
+    <arg name="file_path" default="/tmp/rbf_lio_rbf" />
     
     <node pkg="cuda_rbf" type="elevation_rbf" name="elevation_rbf" output="screen" >
         <remap from="/local_map" to="/lio_sam/mapping/map_local" />

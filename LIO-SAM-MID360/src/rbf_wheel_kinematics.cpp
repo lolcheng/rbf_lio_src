@@ -1,6 +1,7 @@
 #include "rbf_wheel_kinematics.h"
 #include <cmath>
 #include <algorithm>
+#include <urdf/model.h>
 
 namespace lio_sam_rbf
 {
@@ -255,12 +256,55 @@ M20JointStateWheelKinematics::M20JointStateWheelKinematics(
     : topicName_(topicName)
 {
     latestQ_.fill(0.0f);
+    jointLower_.fill(0.0f);
+    jointUpper_.fill(0.0f);
     wheelRadius_ = wheelRadius > 0.0f ? wheelRadius : 0.09f;
+    if (!loadJointLimits())
+    {
+        ROS_FATAL("[lio_sam][rbf] failed to load M20 joint limits from robot_description.");
+        ros::shutdown();
+        return;
+    }
     subJointState_ = nh_.subscribe<sensor_msgs::JointState>(
         topicName_, 1000, &M20JointStateWheelKinematics::jointStateHandler, this,
         ros::TransportHints().tcpNoDelay());
     ROS_INFO_STREAM("[lio_sam][rbf] M20 four-wheel kinematics use joint topic: "
                     << topicName_ << ", wheelRadius=" << wheelRadius_);
+}
+
+bool M20JointStateWheelKinematics::loadJointLimits()
+{
+    static const std::array<std::string, 12> jointNames = {{
+        "fl_hipx_joint", "fl_hipy_joint", "fl_knee_joint",
+        "fr_hipx_joint", "fr_hipy_joint", "fr_knee_joint",
+        "hl_hipx_joint", "hl_hipy_joint", "hl_knee_joint",
+        "hr_hipx_joint", "hr_hipy_joint", "hr_knee_joint"
+    }};
+
+    std::string robotDescription;
+    if (!nh_.getParam("/robot_description", robotDescription) || robotDescription.empty())
+        return false;
+
+    urdf::Model model;
+    if (!model.initString(robotDescription))
+        return false;
+
+    for (size_t i = 0; i < jointNames.size(); ++i)
+    {
+        const urdf::JointConstSharedPtr joint = model.getJoint(jointNames[i]);
+        if (!joint || !joint->limits ||
+            !std::isfinite(joint->limits->lower) ||
+            !std::isfinite(joint->limits->upper) ||
+            joint->limits->lower > joint->limits->upper)
+        {
+            ROS_ERROR_STREAM("[lio_sam][rbf] invalid or missing URDF limits for "
+                             << jointNames[i]);
+            return false;
+        }
+        jointLower_[i] = static_cast<float>(joint->limits->lower);
+        jointUpper_[i] = static_cast<float>(joint->limits->upper);
+    }
+    return true;
 }
 
 void M20JointStateWheelKinematics::jointStateHandler(
@@ -278,19 +322,6 @@ void M20JointStateWheelKinematics::jointStateHandler(
     static const std::array<int, 12> fallback16 = {{
         0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14
     }};
-    static const std::array<float, 12> lower = {{
-        -0.436f, -2.583f, -2.792f,
-        -0.611f, -2.583f, -2.792f,
-        -0.436f, -2.286f, -2.809f,
-        -0.611f, -2.286f, -2.809f
-    }};
-    static const std::array<float, 12> upper = {{
-        0.611f, 2.286f, 2.809f,
-        0.436f, 2.286f, 2.809f,
-        0.611f, 2.583f, 2.792f,
-        0.436f, 2.583f, 2.792f
-    }};
-
     std::array<float, 12> q{};
     for (size_t outIdx = 0; outIdx < jointNames.size(); ++outIdx)
     {
@@ -319,14 +350,15 @@ void M20JointStateWheelKinematics::jointStateHandler(
             return;
         }
 
-        q[outIdx] = static_cast<float>(msg->position[inputIdx]);
-        if (q[outIdx] < lower[outIdx] || q[outIdx] > upper[outIdx])
+        const float measured = static_cast<float>(msg->position[inputIdx]);
+        q[outIdx] = std::max(jointLower_[outIdx], std::min(jointUpper_[outIdx], measured));
+        if (q[outIdx] != measured)
         {
             ROS_WARN_STREAM_THROTTLE(2.0,
                 "[lio_sam][rbf] M20 joint " << jointNames[outIdx]
-                << "=" << q[outIdx] << " is outside URDF limits ["
-                << lower[outIdx] << ", " << upper[outIdx]
-                << "]; using the measured value without clamping.");
+                << "=" << measured << " is outside URDF limits ["
+                << jointLower_[outIdx] << ", " << jointUpper_[outIdx]
+                << "]; clamped to " << q[outIdx] << ".");
         }
     }
 

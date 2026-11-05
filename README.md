@@ -51,9 +51,10 @@ flowchart LR
 
 ## Requirements
 
-可从代码确认的主环境为 Linux、ROS 1 Noetic 和 Catkin，依赖 PCL、OpenCV、Eigen3、GTSAM、Boost、OpenMP 及常用 ROS 消息包。Livox 支持是可选项；仅运行 M20/Airy 主链时不要求 Livox 消息包。构建 `cuda_rbf` 还需要 CUDA Toolkit、Thrust、cuBLAS、cuSOLVER 和 `nlohmann_json`。
+可从代码确认的主环境为 Linux、ROS 1 Noetic 和 Catkin，依赖 PCL、OpenCV、Eigen3、GTSAM、Boost、OpenMP 及常用 ROS 消息包。Livox 支持是可选项；仅运行 M20/Airy 主链时不要求 Livox 消息包。构建 `cuda_rbf` 还需要 CUDA Toolkit、Thrust、cuBLAS 和 cuSOLVER。
 
-具体 Ubuntu、GCC 与 CUDA 版本未由仓库锁定，标记为 **UNKNOWN**。
+仓库未锁定具体小版本；2026-09-09 已在 Ubuntu 20.04.6、GCC 9.4、ROS Noetic、
+GTSAM 4.0.3、PCL 1.10、OpenCV 4.2 和 CUDA 11.8 的组合上完成全量构建。
 
 ## Build
 
@@ -67,11 +68,13 @@ ln -s /absolute/path/to/rbf_lio_20260402/LIO-SAM-MID360 lio_sam
 ln -s /absolute/path/to/rbf_lio_20260402/robot-description robot_description
 catkin_init_workspace
 cd ~/rbf_lio_ws
-catkin_make
+catkin_make -DPYTHON_EXECUTABLE=/usr/bin/python3
 source devel/setup.bash
 ```
 
-需要独立 CUDA 高程节点时，再将 `rbf_cuda` 链接到 `src/cuda_rbf` 后重新编译。当前 Windows 环境未安装 ROS Noetic，因此本次 M20 修改尚未完成 Linux/ROS 实编译。
+需要独立 CUDA 高程节点时，再将 `rbf_cuda` 链接到 `src/cuda_rbf` 后重新编译。
+当前机器的登录环境包含 Anaconda；构建前要确认 CMake 和 Boost 没有指向
+Anaconda，否则会与 ROS/GTSAM 的系统 Boost 混链。完整环境和验证记录见交接文档。
 
 ## Quick Start
 
@@ -91,9 +94,21 @@ roslaunch lio_sam run_m20.launch \
 rosbag play --clock /absolute/path/to/rbf_lio_20260402/data/rosbag/m20_upstairs.bag
 ```
 
-测试 bag 的关节消息由约 10 Hz 有效样本重复成约 500 Hz，且部分值超出 URDF 限位，只适合接口联调，因此 M20 launch 默认关闭主 RBF 约束。最终部署必须换为 GOS 直接发布的真实 500 Hz 数据，验证关节约定后再传入 `enable_rbf_constraint:=true`。
+M20 适配器按厂家 SDK 的方向和零偏将编码器角转换到 URDF，再归一化并检查
+URDF 限位；整包 8258 条消息转换后均无需截断。参数和起始站姿见
+[交接文档](docs/HANDOFF_UBUNTU.md#编码器到-urdf-的转换2026-11-05)。
+默认关闭主 RBF 以保留基础 LIO 对照；传入 `enable_rbf_constraint:=true` 可开启
+四轮约束。bag 的约 500 Hz 关节发布来自约 10 Hz 源样本，回放保留源时间戳，
+不把重复消息视为独立测量。
 
-真实 Airy 驱动的已确认入口是 `ros2 launch rslidar_sdk start.py`。主估计器是 ROS 1，仓库未包含已验证的 ROS 1/ROS 2 bridge 启动方案，因此实机跨版本连通仍为 **TODO**。
+2026-11-05 已修正 Airy 原始轴到 base 的倒置旋转，并重新完成开关回放：两组均
+生成 81 条有限 TUM 位姿；开启时 112 组 RBF 统计均为 24 行约束，末端 z 约
+`+1.50 m`，地图恢复上楼方向。关闭 RBF 仍有明显姿态漂移，bag 也无 ground truth，
+不能据此判定定位精度；完整记录见交接文档第 6.2 节。
+独立 CUDA 高程链也已实际执行 GPU 求解并发布有限高程图；它仍不向主 LM 回馈地形模型。
+
+离线运行使用 bag 中的 ROS 1 消息，在工作站上完成计算，无需启动 Airy 驱动或
+ROS 1/ROS 2 bridge。未来在线采集才涉及 ROS 2 驱动与 ROS 1 主链的连接。
 
 ## ROS Interfaces
 
@@ -118,6 +133,9 @@ rosbag play --clock /absolute/path/to/rbf_lio_20260402/data/rosbag/m20_upstairs.
 - `support/rslidar_ros2_ws/config/m20_airy.yaml`：只读 Airy ROS 2 驱动参考配置，不由 ROS 1 主包加载。
 
 M20 点云坐标变换由主包完成，驱动构建必须保持 `ENABLE_TRANSFORM=OFF`，否则会发生重复变换。DIFOP 外参和 URDF 安装位置的推导见 [部署文档](docs/DEPLOYMENT.md)。
+当前原始 Airy 到 base 的旋转为 `Rx(pi)*Ry(pi/2)`，使地面位于机体下方。
+IMU 按同一旋转组合 DIFOP，`imuAccelerationSign: +1`；旧的仅加速度反号方案
+已撤销，因为它无法修正倒置点云和角速度方向。
 
 ## Experiments
 

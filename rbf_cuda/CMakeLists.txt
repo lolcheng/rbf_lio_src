@@ -53,7 +53,6 @@ find_package(OpenCV REQUIRED)
 #   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 # endif()
 find_package(CUDA REQUIRED)
-find_package(nlohmann_json REQUIRED)
 
 message("-- CUDA version: ${CUDA_VERSION}")
 message("-- CUDA library: ${CUDA_LIBRARIES}")
@@ -266,7 +265,7 @@ add_executable(elevation_rbf src/rbf/elevation_rbf.cpp src/d2_tree/d2_tree.cpp)
 # target_link_libraries(debug ${catkin_LIBRARIES} ${PCL_LIBRARIES} ceres)
 # target_link_libraries(debug_cuda mmr_cuda ${catkin_LIBRARIES} ${PCL_LIBRARIES} ceres)
 target_link_libraries(debug_rbf rbf_cuda ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CUDA_cusolver_LIBRARY} ${CUDA_cublas_LIBRARY})
-target_link_libraries(elevation_rbf rbf_cuda ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CUDA_cusolver_LIBRARY} ${CUDA_cublas_LIBRARY} nlohmann_json::nlohmann_json)
+target_link_libraries(elevation_rbf rbf_cuda ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CUDA_cusolver_LIBRARY} ${CUDA_cublas_LIBRARY})
 
 #############
 ## Install ##

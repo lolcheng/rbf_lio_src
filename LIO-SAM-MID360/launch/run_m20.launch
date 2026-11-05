@@ -13,6 +13,7 @@
     <param name="/use_sim_time" value="$(arg use_sim_time)"/>
     <param name="lio_sam/enableRbfConstraint" value="$(arg enable_rbf_constraint)"/>
     <param name="lio_sam/saveTUMTrajectoryPath" value="$(arg tum_trajectory_path)"/>
+    <param name="robot_description" textfile="$(find robot_description)/M20/urdf/M20.urdf"/>
 
     <!-- The publisher may use m20_udp_bridge/M20JointsData. The local message
          has the same ROS 1 MD5 and avoids a permanent build dependency on the
@@ -25,16 +26,12 @@
         <param name="input_topic" value="/JOINTS_DATA"/>
         <param name="output_topic" value="/joint_states_m20"/>
         <param name="drop_stale" value="true"/>
-        <!-- APDU values are treated as URDF joint coordinates. Keep these
-             configurable until the final native GOS 500 Hz feed is verified. -->
-        <rosparam param="position_scale">[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]</rosparam>
-        <rosparam param="position_offset">[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]</rosparam>
-        <rosparam param="wheel_velocity_scale">[1, 1, 1, 1]</rosparam>
+        <!-- Encoder directions, zero offsets and wrapping are loaded from
+             paramsM20.yaml into this node's private namespace. -->
     </node>
 
     <include file="$(find lio_sam)/launch/include/module_loam.launch"/>
 
-    <param name="robot_description" textfile="$(find robot_description)/M20/urdf/M20.urdf"/>
     <node if="$(arg with_robot_tf)"
           name="robot_state_publisher"
           pkg="robot_state_publisher"
